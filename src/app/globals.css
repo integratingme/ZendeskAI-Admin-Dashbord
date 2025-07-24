@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #000000;
+  --border: #e5e5e5;
+  --muted: #f5f5f5;
+  --accent: #000000;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-maven-pro);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-maven-pro), system-ui, sans-serif;
+}
+
+/* Admin Dashboard Styles */
+.admin-container {
+  min-height: 100vh;
+  background: white;
+}
+
+.admin-sidebar {
+  background: #fafafa;
+  border-right: 1px solid var(--border);
+}
+
+.admin-content {
+  background: white;
+}
+
+.admin-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.admin-button {
+  background: black;
+  color: white;
+  border: 1px solid black;
+  transition: all 0.2s ease;
+}
+
+.admin-button:hover {
+  background: #333;
+}
+
+.admin-button-outline {
+  background: white;
+  color: black;
+  border: 1px solid var(--border);
+}
+
+.admin-button-outline:hover {
+  background: var(--muted);
+}

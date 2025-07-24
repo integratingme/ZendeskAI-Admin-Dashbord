@@ -38,10 +38,41 @@ export default function Overview() {
       setError(null);
       
       const response = await apiService.getAnalyticsOverview();
-      if (response.success) {
-        setStats(response.overview);
+      console.log('Overview API response:', response);
+      console.log('Response keys:', Object.keys(response));
+      console.log('Response.success:', response.success);
+      console.log('Response.data:', response.data);
+      
+      // Check if response has overview data directly
+      if (response.success && response.data && (response.data as Record<string, unknown>).overview) {
+        console.log('Using success + data.overview path');
+        setStats((response.data as Record<string, unknown>).overview as OverviewStats);
+      } else if (response.success && response.data) {
+        console.log('Using success + data path');
+        setStats(response.data as unknown as OverviewStats);
+      } else if (response.data) {
+        console.log('Using data only path');
+        setStats(response.data as unknown as OverviewStats);
+      } else if ((response as unknown as Record<string, unknown>).overview) {
+        console.log('Using direct overview path');
+        setStats((response as unknown as Record<string, unknown>).overview as OverviewStats);
+      } else if ((response as unknown as Record<string, unknown>).total_subscriptions !== undefined) {
+        console.log('Using direct stats path');
+        setStats(response as unknown as OverviewStats);
       } else {
-        throw new Error(response.message || 'Failed to fetch overview');
+        console.log('No valid overview data found, using defaults');
+        console.log('Available response properties:', Object.keys(response));
+        // Create a default stats object when no data is available
+        const defaultStats: OverviewStats = {
+          total_subscriptions: 0,
+          total_cost_usd: 0,
+          total_requests: 0,
+          total_tokens: 0,
+          average_cost_per_subscription: 0,
+          subscription_days_breakdown: { "30": 0, "90": 0, "365": 0 },
+          provider_usage: {}
+        };
+        setStats(defaultStats);
       }
     } catch (err) {
       if (err instanceof ApiError) {
@@ -98,7 +129,7 @@ export default function Overview() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Total Subscriptions</h3>
-              <p className="text-3xl font-bold text-black mt-2">{stats.total_subscriptions}</p>
+              <p className="text-3xl font-bold text-black mt-2">{stats.total_subscriptions || 0}</p>
             </div>
             <FiUsers className="text-2xl text-gray-400" />
           </div>
@@ -108,7 +139,7 @@ export default function Overview() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Total Cost</h3>
-              <p className="text-3xl font-bold text-black mt-2">${stats.total_cost_usd.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-black mt-2">${stats.total_cost_usd?.toFixed(2) || '0.00'}</p>
             </div>
             <FiDollarSign className="text-2xl text-gray-400" />
           </div>
@@ -118,7 +149,7 @@ export default function Overview() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Total Requests</h3>
-              <p className="text-3xl font-bold text-black mt-2">{stats.total_requests.toLocaleString()}</p>
+              <p className="text-3xl font-bold text-black mt-2">{stats.total_requests?.toLocaleString() || '0'}</p>
             </div>
             <FiActivity className="text-2xl text-gray-400" />
           </div>
@@ -128,7 +159,7 @@ export default function Overview() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Avg Cost/Sub</h3>
-              <p className="text-3xl font-bold text-black mt-2">${stats.average_cost_per_subscription.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-black mt-2">${stats.average_cost_per_subscription?.toFixed(2) || '0.00'}</p>
             </div>
             <FiTrendingUp className="text-2xl text-gray-400" />
           </div>
@@ -140,15 +171,15 @@ export default function Overview() {
         <h3 className="text-lg font-semibold text-black mb-4">Subscription Duration Breakdown</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown["30"]}</p>
+            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown?.["30"] || 0}</p>
             <p className="text-sm text-gray-600">30 Days</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown["90"]}</p>
+            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown?.["90"] || 0}</p>
             <p className="text-sm text-gray-600">90 Days</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown["365"]}</p>
+            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown?.["365"] || 0}</p>
             <p className="text-sm text-gray-600">365 Days</p>
           </div>
         </div>
@@ -158,7 +189,7 @@ export default function Overview() {
       <div className="admin-card p-6">
         <h3 className="text-lg font-semibold text-black mb-4">Provider Usage</h3>
         <div className="space-y-4">
-          {Object.entries(stats.provider_usage).map(([provider, usage]) => (
+          {Object.entries(stats.provider_usage || {}).map(([provider, usage]) => (
             <div key={provider} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 bg-black rounded-full"></div>
@@ -166,7 +197,7 @@ export default function Overview() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">
-                  Main: {usage.main_usage} | Fallback: {usage.fallback_usage}
+                  Main: {usage.main_usage || 0} | Fallback: {usage.fallback_usage || 0}
                 </p>
               </div>
             </div>

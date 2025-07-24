@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiService, ApiError } from '@/lib/api';
 
 interface SubscriptionUsage {
@@ -22,6 +22,12 @@ interface SubscriptionUsage {
       used_count: number;
     };
   };
+}
+
+interface SubscriptionData {
+  customer_email: string;
+  zendesk_subdomain: string;
+  [key: string]: unknown;
 }
 
 interface SubscriptionCosts {
@@ -62,33 +68,41 @@ export default function Analytics() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, []);
-
-  useEffect(() => {
-    if (selectedSubscription) {
-      fetchAnalyticsData();
-    }
-  }, [selectedSubscription]);
-
-  const fetchSubscriptions = async () => {
+  const fetchSubscriptions = useCallback(async () => {
     try {
       const response = await apiService.listSubscriptions();
-      if (response.success) {
-        const subscriptionsArray = Object.entries(response.subscriptions).map(([key, sub]: [string, any]) => ({
+      console.log('Analytics subscriptions response:', response);
+      
+      if (response.success && response.data?.subscriptions) {
+        const subscriptionsArray = Object.entries(response.data.subscriptions).map(([key, sub]: [string, SubscriptionData]) => ({
           subscription_key: key,
-          customer_email: sub.customer_email,
-          zendesk_subdomain: sub.zendesk_subdomain
+          customer_email: sub.customer_email as string,
+          zendesk_subdomain: sub.zendesk_subdomain as string
+        }));
+        setSubscriptions(subscriptionsArray);
+      } else if (response.data) {
+        // Handle case where subscriptions are directly in data
+        const subscriptionsArray = Object.entries(response.data as Record<string, Record<string, unknown>>).map(([key, sub]) => ({
+          subscription_key: key,
+          customer_email: sub.customer_email as string,
+          zendesk_subdomain: sub.zendesk_subdomain as string
+        }));
+        setSubscriptions(subscriptionsArray);
+      } else if ((response as unknown as Record<string, unknown>).subscriptions) {
+        // Handle case where subscriptions are directly in response
+        const subscriptionsArray = Object.entries((response as unknown as Record<string, unknown>).subscriptions as Record<string, Record<string, unknown>>).map(([key, sub]: [string, Record<string, unknown>]) => ({
+          subscription_key: key,
+          customer_email: sub.customer_email as string,
+          zendesk_subdomain: sub.zendesk_subdomain as string
         }));
         setSubscriptions(subscriptionsArray);
       }
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
     }
-  };
+  }, []);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     if (!selectedSubscription) return;
     
     try {
@@ -100,8 +114,28 @@ export default function Analytics() {
         apiService.getSubscriptionCosts(selectedSubscription)
       ]);
       
-      setUsageData(usageResponse);
-      setCostsData(costsResponse);
+      console.log('Usage response:', usageResponse);
+      console.log('Costs response:', costsResponse);
+      
+      // Handle usage response
+      if (usageResponse.success && usageResponse.data) {
+        setUsageData(usageResponse.data as unknown as SubscriptionUsage);
+      } else if (usageResponse.data) {
+        setUsageData(usageResponse.data as unknown as SubscriptionUsage);
+      } else {
+        // Try using response directly
+        setUsageData(usageResponse as unknown as SubscriptionUsage);
+      }
+      
+      // Handle costs response
+      if (costsResponse.success && costsResponse.data) {
+        setCostsData(costsResponse.data as unknown as SubscriptionCosts);
+      } else if (costsResponse.data) {
+        setCostsData(costsResponse.data as unknown as SubscriptionCosts);
+      } else {
+        // Try using response directly
+        setCostsData(costsResponse as unknown as SubscriptionCosts);
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(`API Error: ${err.message}`);
@@ -112,7 +146,17 @@ export default function Analytics() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSubscription]);
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
+
+  useEffect(() => {
+    if (selectedSubscription) {
+      fetchAnalyticsData();
+    }
+  }, [selectedSubscription, fetchAnalyticsData]);
 
   return (
     <div className="space-y-6">

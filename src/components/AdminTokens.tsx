@@ -193,7 +193,7 @@ export default function AdminTokens() {
           </button>
           <button 
             onClick={() => setShowCreateForm(true)}
-            disabled={tokensData && tokensData.count >= tokensData.max_allowed}
+            disabled={Boolean(tokensData && tokensData.count >= tokensData.max_allowed)}
             className="admin-button px-4 py-2 rounded-lg disabled:opacity-50"
           >
             Create Token
@@ -372,13 +372,13 @@ export default function AdminTokens() {
               </div>
             </div>
             <p className="text-sm text-red-600 mb-4">
-              ⚠️ Save this token now. You won't be able to see it again!
+              ⚠️ Save this token now. You won&apos;t be able to see it again!
             </p>
             <button 
               onClick={() => setNewToken(null)}
               className="admin-button px-4 py-2 rounded-lg w-full"
             >
-              I've Saved It
+              I&apos;ve Saved It
             </button>
           </div>
         </div>

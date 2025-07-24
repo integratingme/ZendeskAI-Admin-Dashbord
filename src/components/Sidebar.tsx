@@ -29,7 +29,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
   const { logout } = useAuth();
 
   const handleLogout = () => {
-    if (confirm('Are you sure you want to logout?')) {
+    if (window.confirm('Are you sure you want to logout?')) {
       logout();
     }
   };
@@ -47,7 +47,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           return (
             <button
               key={item.id}
-              onClick={() => onSectionChange(item.id as any)}
+              onClick={() => onSectionChange(item.id as Parameters<typeof onSectionChange>[0])}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
                 activeSection === item.id
                   ? 'bg-black text-white'
@@ -72,7 +72,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
         
         <div className="text-xs text-gray-500">
           <p>Version 1.0.0</p>
-          <p className="mt-1">© 2025 Admin Panel</p>
+          <p className="mt-1">© 2025 IntegratingMe</p>
         </div>
       </div>
     </div>

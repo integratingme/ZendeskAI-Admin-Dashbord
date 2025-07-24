@@ -1,8 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiService, ApiError } from '@/lib/api';
+import { useToastContext } from '@/contexts/ToastContext';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { FiRefreshCw, FiPlus, FiEye, FiTrash2, FiX, FiCheck } from 'react-icons/fi';
+
+interface ProviderData {
+  [key: string]: unknown;
+}
 
 interface Subscription {
   subscription_key: string;
@@ -40,11 +46,19 @@ export default function Subscriptions() {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [providers, setProviders] = useState<{[key: string]: any}>({});
+  const [providers, setProviders] = useState<{[key: string]: ProviderData}>({});
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    subscriptionKey: string;
+    customerEmail: string;
+  }>({ isOpen: false, subscriptionKey: '', customerEmail: '' });
+  
+  const toast = useToastContext();
   
   // Form state
   const [formData, setFormData] = useState({
     customer_email: '',
+    zendesk_subdomain: '',
     subscription_days: 30,
     main_llm: {
       provider: '',
@@ -64,21 +78,36 @@ export default function Subscriptions() {
     }
   });
 
+  const fetchProviders = useCallback(async () => {
+    try {
+      const response = await apiService.listProviders();
+      console.log('Providers response in Subscriptions:', response);
+      
+      if (response.success && response.data?.providers) {
+        console.log('Using success + data.providers path');
+        setProviders(response.data.providers as {[key: string]: ProviderData});
+      } else if (response.data) {
+        console.log('Using data only path');
+        setProviders(response.data as {[key: string]: ProviderData});
+      } else if ((response as unknown as Record<string, unknown>).providers) {
+        console.log('Using direct providers path');
+        setProviders((response as unknown as Record<string, unknown>).providers as {[key: string]: ProviderData});
+      } else {
+        console.log('Using response as-is for providers');
+        setProviders(response as unknown as {[key: string]: ProviderData});
+      }
+      
+      console.log('Final providers set:', Object.keys(response as unknown as {[key: string]: Record<string, unknown>}));
+    } catch (err) {
+      console.error('Error fetching providers:', err);
+      toast.error('Failed to load providers', 'Unable to load LLM provider list');
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchSubscriptions();
     fetchProviders();
-  }, []);
-
-  const fetchProviders = async () => {
-    try {
-      const response = await apiService.listProviders();
-      if (response.success) {
-        setProviders(response.providers);
-      }
-    } catch (err) {
-      console.error('Error fetching providers:', err);
-    }
-  };
+  }, [fetchProviders]);
 
   const fetchSubscriptions = async () => {
     try {
@@ -86,30 +115,130 @@ export default function Subscriptions() {
       setError(null);
       
       const response = await apiService.listSubscriptions();
-      if (response.success) {
+      console.log('Subscriptions response:', response);
+      
+      if (response.success && response.data?.subscriptions) {
         // Convert the subscriptions object to array format
-        const subscriptionsArray = Object.entries(response.subscriptions).map(([key, sub]: [string, any]) => ({
+        const subscriptionsArray = Object.entries(response.data.subscriptions).map(([key, sub]: [string, Record<string, unknown>]) => ({
           subscription_key: key,
-          customer_email: sub.customer_email,
-          zendesk_subdomain: sub.zendesk_subdomain,
-          subscription_days: sub.subscription_days,
-          created_at: sub.created_at,
-          expires_at: sub.expires_at,
-          is_active: sub.is_active,
+          customer_email: sub.customer_email as string,
+          zendesk_subdomain: sub.zendesk_subdomain as string,
+          subscription_days: sub.subscription_days as number,
+          created_at: sub.created_at as string,
+          expires_at: sub.expires_at as string,
+          is_active: sub.is_active as boolean,
           main_llm: {
-            provider: sub.main_llm.provider,
-            model: sub.main_llm.model
+            provider: (sub.main_llm as Record<string, unknown>).provider as string,
+            model: (sub.main_llm as Record<string, unknown>).model as string
           },
           fallback_llm: {
-            provider: sub.fallback_llm.provider,
-            model: sub.fallback_llm.model
+            provider: (sub.fallback_llm as Record<string, unknown>).provider as string,
+            model: (sub.fallback_llm as Record<string, unknown>).model as string
           },
-          usage_stats: sub.usage_stats
+          usage_stats: sub.usage_stats as {
+            main_llm_usage: {
+              total_requests: number;
+              estimated_cost_usd: number;
+            };
+            fallback_llm_usage: {
+              total_requests: number;
+              estimated_cost_usd: number;
+            };
+          }
+        }));
+        setSubscriptions(subscriptionsArray);
+      } else if (response.data) {
+        // Handle case where subscriptions are directly in data
+        const subscriptionsArray = Object.entries(response.data as Record<string, Record<string, unknown>>).map(([key, sub]) => ({
+          subscription_key: key,
+          customer_email: sub.customer_email as string,
+          zendesk_subdomain: sub.zendesk_subdomain as string,
+          subscription_days: sub.subscription_days as number,
+          created_at: sub.created_at as string,
+          expires_at: sub.expires_at as string,
+          is_active: sub.is_active as boolean,
+          main_llm: {
+            provider: (sub.main_llm as Record<string, unknown>).provider as string,
+            model: (sub.main_llm as Record<string, unknown>).model as string
+          },
+          fallback_llm: {
+            provider: (sub.fallback_llm as Record<string, unknown>).provider as string,
+            model: (sub.fallback_llm as Record<string, unknown>).model as string
+          },
+          usage_stats: sub.usage_stats as {
+            main_llm_usage: {
+              total_requests: number;
+              estimated_cost_usd: number;
+            };
+            fallback_llm_usage: {
+              total_requests: number;
+              estimated_cost_usd: number;
+            };
+          }
         }));
         
         setSubscriptions(subscriptionsArray);
+      } else if ((response as unknown as Record<string, unknown>).subscriptions) {
+        // Handle case where subscriptions are directly in response
+        const subscriptionsArray = Object.entries((response as unknown as Record<string, unknown>).subscriptions as Record<string, Record<string, unknown>>).map(([key, sub]: [string, Record<string, unknown>]) => ({
+          subscription_key: key,
+          customer_email: sub.customer_email as string,
+          zendesk_subdomain: sub.zendesk_subdomain as string,
+          subscription_days: sub.subscription_days as number,
+          created_at: sub.created_at as string,
+          expires_at: sub.expires_at as string,
+          is_active: sub.is_active as boolean,
+          main_llm: {
+            provider: (sub.main_llm as Record<string, unknown>).provider as string,
+            model: (sub.main_llm as Record<string, unknown>).model as string
+          },
+          fallback_llm: {
+            provider: (sub.fallback_llm as Record<string, unknown>).provider as string,
+            model: (sub.fallback_llm as Record<string, unknown>).model as string
+          },
+          usage_stats: sub.usage_stats as {
+            main_llm_usage: {
+              total_requests: number;
+              estimated_cost_usd: number;
+            };
+            fallback_llm_usage: {
+              total_requests: number;
+              estimated_cost_usd: number;
+            };
+          }
+        }));
+        setSubscriptions(subscriptionsArray);
       } else {
-        throw new Error(response.message || 'Failed to fetch subscriptions');
+        console.log('No subscriptions found in expected format, trying response as-is');
+        // Try to use response directly as subscriptions object
+        const subscriptionsArray = Object.entries(response as unknown as Record<string, Record<string, unknown>>).map(([key, sub]: [string, Record<string, unknown>]) => ({
+          subscription_key: key,
+          customer_email: sub.customer_email as string || 'Unknown',
+          zendesk_subdomain: sub.zendesk_subdomain as string || 'Unknown',
+          subscription_days: sub.subscription_days as number || 30,
+          created_at: sub.created_at as string || new Date().toISOString(),
+          expires_at: sub.expires_at as string || new Date().toISOString(),
+          is_active: sub.is_active as boolean || true,
+          main_llm: {
+            provider: ((sub.main_llm as Record<string, unknown>)?.provider as string) || 'Unknown',
+            model: ((sub.main_llm as Record<string, unknown>)?.model as string) || 'Unknown'
+          },
+          fallback_llm: {
+            provider: ((sub.fallback_llm as Record<string, unknown>)?.provider as string) || 'Unknown',
+            model: ((sub.fallback_llm as Record<string, unknown>)?.model as string) || 'Unknown'
+          },
+          usage_stats: {
+            main_llm_usage: {
+              total_requests: 0,
+              estimated_cost_usd: 0
+            },
+            fallback_llm_usage: {
+              total_requests: 0,
+              estimated_cost_usd: 0
+            }
+          }
+        }));
+        setSubscriptions(subscriptionsArray);
       }
     } catch (err) {
       if (err instanceof ApiError) {
@@ -123,28 +252,38 @@ export default function Subscriptions() {
     }
   };
 
-  const handleDeleteSubscription = async (subscriptionKey: string) => {
-    if (!confirm('Are you sure you want to delete this subscription?')) {
-      return;
-    }
+  const handleDeleteSubscription = (subscriptionKey: string, customerEmail: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      subscriptionKey,
+      customerEmail
+    });
+  };
 
+  const confirmDelete = async () => {
     try {
-      const response = await apiService.deleteSubscription(subscriptionKey);
+      const response = await apiService.deleteSubscription(confirmDialog.subscriptionKey);
       if (response.success) {
         // Remove from local state
-        setSubscriptions(prev => prev.filter(sub => sub.subscription_key !== subscriptionKey));
-        alert('Subscription deleted successfully');
+        setSubscriptions(prev => prev.filter(sub => sub.subscription_key !== confirmDialog.subscriptionKey));
+        toast.success('Subscription Deleted', 'Subscription has been successfully removed');
       } else {
         throw new Error(response.message || 'Failed to delete subscription');
       }
     } catch (err) {
       console.error('Error deleting subscription:', err);
       if (err instanceof ApiError) {
-        alert(`Failed to delete subscription: ${err.message}`);
+        toast.error('Failed to Delete Subscription', err.message);
       } else {
-        alert('Failed to delete subscription');
+        toast.error('Failed to Delete Subscription', 'An unexpected error occurred');
       }
+    } finally {
+      setConfirmDialog({ isOpen: false, subscriptionKey: '', customerEmail: '' });
     }
+  };
+
+  const cancelDelete = () => {
+    setConfirmDialog({ isOpen: false, subscriptionKey: '', customerEmail: '' });
   };
 
   const handleViewSubscription = (subscription: Subscription) => {
@@ -168,10 +307,10 @@ export default function Subscriptions() {
         [llmType]: {
           ...prev[llmType],
           provider,
-          endpoint: providerData.endpoint,
-          model: providerData.example_models[0] || '',
-          input_price_per_million: Object.values(providerData.default_pricing)[0]?.input || 0,
-          output_price_per_million: Object.values(providerData.default_pricing)[0]?.output || 0
+          endpoint: providerData.endpoint as string,
+          model: (providerData.example_models as string[])[0] || '',
+          input_price_per_million: Object.values(providerData.default_pricing as Record<string, {input: number; output: number}>)[0]?.input || 0,
+          output_price_per_million: Object.values(providerData.default_pricing as Record<string, {input: number; output: number}>)[0]?.output || 0
         }
       }));
     }
@@ -182,17 +321,17 @@ export default function Subscriptions() {
     
     // Validation
     if (!formData.customer_email) {
-      alert('Please fill in customer email');
+      toast.warning('Customer Email Required', 'Please enter a customer email address');
       return;
     }
     
     if (!formData.main_llm.provider || !formData.fallback_llm.provider) {
-      alert('Please select both main and fallback LLM providers');
+      toast.warning('Providers Required', 'Please select both main and fallback LLM providers');
       return;
     }
     
     if (!formData.main_llm.api_key || !formData.fallback_llm.api_key) {
-      alert('Please provide API keys for both LLM providers');
+      toast.warning('API Keys Required', 'Please provide API keys for both LLM providers');
       return;
     }
 
@@ -200,7 +339,8 @@ export default function Subscriptions() {
     try {
       const response = await apiService.createSubscription(formData);
       if (response.success) {
-        alert(`Subscription created successfully! Key: ${response.subscription_key}`);
+        const subscriptionKey = (response.data as Record<string, unknown>)?.subscription_key as string || 'Generated';
+        toast.success('Subscription Created', `New subscription created successfully! Key: ${subscriptionKey}`);
         setShowCreateForm(false);
         resetForm();
         await fetchSubscriptions();
@@ -210,9 +350,9 @@ export default function Subscriptions() {
     } catch (err) {
       console.error('Error creating subscription:', err);
       if (err instanceof ApiError) {
-        alert(`Failed to create subscription: ${err.message}`);
+        toast.error('Failed to Create Subscription', err.message);
       } else {
-        alert('Failed to create subscription');
+        toast.error('Failed to Create Subscription', 'An unexpected error occurred');
       }
     } finally {
       setCreating(false);
@@ -222,6 +362,7 @@ export default function Subscriptions() {
   const resetForm = () => {
     setFormData({
       customer_email: '',
+      zendesk_subdomain: '',
       subscription_days: 30,
       main_llm: {
         provider: '',
@@ -387,7 +528,7 @@ export default function Subscriptions() {
                         View
                       </button>
                       <button 
-                        onClick={() => handleDeleteSubscription(subscription.subscription_key)}
+                        onClick={() => handleDeleteSubscription(subscription.subscription_key, subscription.customer_email)}
                         className="text-red-600 hover:text-red-900 flex items-center gap-1"
                       >
                         <FiTrash2 className="text-sm" />
@@ -562,6 +703,19 @@ export default function Subscriptions() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Zendesk Subdomain *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.zendesk_subdomain}
+                      onChange={(e) => setFormData(prev => ({ ...prev, zendesk_subdomain: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      placeholder="company"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Subscription Duration
                     </label>
                     <select
@@ -575,16 +729,15 @@ export default function Subscriptions() {
                     </select>
                   </div>
                 </div>
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <strong>Auto-Detection:</strong> The Zendesk subdomain will be automatically derived from the customer email domain.
-                  </p>
-                </div>
               </div>
 
               {/* Main LLM Configuration */}
               <div className="admin-card p-4">
                 <h3 className="font-medium text-gray-900 mb-4">Main LLM Configuration</h3>
+                {/* Debug info */}
+                <div className="mb-2 text-xs text-gray-500">
+                  Providers loaded: {Object.keys(providers).length} ({Object.keys(providers).join(', ')})
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -597,9 +750,13 @@ export default function Subscriptions() {
                       required
                     >
                       <option value="">Select Provider</option>
-                      {Object.entries(providers).map(([key, provider]) => (
-                        <option key={key} value={key}>{provider.name}</option>
-                      ))}
+                      {Object.keys(providers).length === 0 ? (
+                        <option disabled>Loading providers...</option>
+                      ) : (
+                        Object.entries(providers).map(([key, provider]) => (
+                          <option key={key} value={key}>{provider.name as string}</option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>
@@ -697,9 +854,13 @@ export default function Subscriptions() {
                       required
                     >
                       <option value="">Select Provider</option>
-                      {Object.entries(providers).map(([key, provider]) => (
-                        <option key={key} value={key}>{provider.name}</option>
-                      ))}
+                      {Object.keys(providers).length === 0 ? (
+                        <option disabled>Loading providers...</option>
+                      ) : (
+                        Object.entries(providers).map(([key, provider]) => (
+                          <option key={key} value={key}>{provider.name as string}</option>
+                        ))
+                      )}
                     </select>
                   </div>
                   <div>
@@ -817,6 +978,18 @@ export default function Subscriptions() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Subscription"
+        message={`Are you sure you want to delete the subscription for "${confirmDialog.customerEmail}"? This action cannot be undone and will immediately disable access for this customer.`}
+        confirmText="Delete Subscription"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 }

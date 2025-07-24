@@ -22,7 +22,6 @@ export default function Providers() {
   const [providers, setProviders] = useState<{[key: string]: Provider}>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [testingProvider, setTestingProvider] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProviders();
@@ -34,10 +33,21 @@ export default function Providers() {
       setError(null);
       
       const response = await apiService.listProviders();
-      if (response.success) {
-        setProviders(response.providers);
+      console.log('Providers response:', response);
+      console.log('Response keys:', Object.keys(response));
+      
+      if (response.success && response.data?.providers) {
+        console.log('Using success + data.providers path');
+        setProviders(response.data.providers as {[key: string]: Provider});
+      } else if (response.data) {
+        console.log('Using data only path');
+        setProviders(response.data as {[key: string]: Provider});
+      } else if ((response as unknown as Record<string, unknown>).providers) {
+        console.log('Using direct providers path');
+        setProviders((response as unknown as Record<string, unknown>).providers as {[key: string]: Provider});
       } else {
-        throw new Error(response.message || 'Failed to fetch providers');
+        console.log('Using response as-is for providers');
+        setProviders(response as unknown as {[key: string]: Provider});
       }
     } catch (err) {
       if (err instanceof ApiError) {

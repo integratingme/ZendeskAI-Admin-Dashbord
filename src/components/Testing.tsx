@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { apiService, ApiError } from '@/lib/api';
+import { useToastContext } from '@/contexts/ToastContext';
+
+interface TestResult {
+  [key: string]: unknown;
+}
 
 interface TestUser {
   subscription_key: string;
@@ -20,9 +25,11 @@ export default function Testing() {
   const [testType, setTestType] = useState<'main' | 'fallback' | 'both'>('both');
   const [testPrompt, setTestPrompt] = useState('Hello, this is a test message. Please respond briefly to confirm the connection is working.');
   const [testing, setTesting] = useState(false);
-  const [testResults, setTestResults] = useState<any>(null);
+  const [testResults, setTestResults] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const toast = useToastContext();
 
   useEffect(() => {
     fetchUsers();
@@ -34,8 +41,17 @@ export default function Testing() {
       setError(null);
       
       const response = await apiService.getTestingUsers();
-      if (response.success) {
-        setUsers(response.users);
+      console.log('Testing users response:', response);
+      
+      // Handle different response structures
+      if (response.success && response.data) {
+        setUsers((response.data as Record<string, unknown>).users as TestUser[]);
+      } else if (response.data) {
+        // Handle case where response doesn't have success field but has data
+        setUsers((response.data as Record<string, unknown>).users as TestUser[]);
+      } else if ((response as unknown as Record<string, unknown>).users) {
+        // Handle case where response IS the data (direct users array)
+        setUsers((response as unknown as Record<string, unknown>).users as TestUser[]);
       } else {
         throw new Error(response.message || 'Failed to fetch users');
       }
@@ -53,7 +69,7 @@ export default function Testing() {
 
   const runTest = async () => {
     if (!selectedUser) {
-      alert('Please select a user to test');
+      toast.warning('User Selection Required', 'Please select a user to test');
       return;
     }
 
@@ -67,17 +83,35 @@ export default function Testing() {
         test_prompt: testPrompt
       });
 
-      if (response.success) {
-        setTestResults(response.test_results);
+      console.log('Test response:', response);
+      console.log('Response keys:', Object.keys(response));
+      
+      // Handle different response structures
+      if (response.success && (response as unknown as Record<string, unknown>).test_results) {
+        console.log('Using success + test_results path');
+        setTestResults((response as unknown as Record<string, unknown>).test_results as TestResult);
+      } else if (response.success && response.data) {
+        console.log('Using success + data path');
+        setTestResults(response.data as unknown as TestResult);
+      } else if (response.data) {
+        console.log('Using data only path');
+        setTestResults(response.data as unknown as TestResult);
+      } else if ((response as unknown as Record<string, unknown>).overall_status) {
+        console.log('Using direct response path');
+        setTestResults(response as unknown as TestResult);
       } else {
-        throw new Error(response.message || 'Test failed');
+        console.log('Using response as-is');
+        setTestResults(response as unknown as TestResult);
       }
+      
+      // Log the final test results to see what we actually have
+      console.log('Final test results set:', response as unknown as TestResult);
     } catch (err) {
       console.error('Error running test:', err);
       if (err instanceof ApiError) {
-        alert(`Test failed: ${err.message}`);
+        toast.error('Test Failed', err.message);
       } else {
-        alert('Test failed. Please try again.');
+        toast.error('Test Failed', 'Please try again');
       }
     } finally {
       setTesting(false);
@@ -182,7 +216,7 @@ export default function Testing() {
                       type="radio"
                       value={type}
                       checked={testType === type}
-                      onChange={(e) => setTestType(e.target.value as any)}
+                      onChange={(e) => setTestType(e.target.value as 'main' | 'fallback' | 'both')}
                       className="mr-2"
                     />
                     <span className="capitalize">{type} LLM{type === 'both' ? 's' : ''}</span>
@@ -217,69 +251,72 @@ export default function Testing() {
       {testResults && (
         <div className="admin-card p-6">
           <h3 className="text-lg font-semibold text-black mb-4">Test Results</h3>
+          
+          
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="font-medium">Overall Status:</span>
               <span className={`px-3 py-1 rounded-full text-sm ${
-                testResults.overall_status === 'excellent' ? 'bg-green-100 text-green-800' :
-                testResults.overall_status === 'main_only' ? 'bg-yellow-100 text-yellow-800' :
-                testResults.overall_status === 'fallback_only' ? 'bg-orange-100 text-orange-800' :
+                (testResults.overall_status as string) === 'excellent' ? 'bg-green-100 text-green-800' :
+                (testResults.overall_status as string) === 'success' ? 'bg-green-100 text-green-800' :
+                (testResults.overall_status as string) === 'main_only' ? 'bg-yellow-100 text-yellow-800' :
+                (testResults.overall_status as string) === 'fallback_only' ? 'bg-orange-100 text-orange-800' :
                 'bg-red-100 text-red-800'
               }`}>
-                {testResults.overall_status}
+                {testResults.overall_status as string || 'Unknown'}
               </span>
             </div>
 
-            {testResults.main_llm_test && (
+            {(testResults.main_llm_test as TestResult) && (
               <div className="border border-gray-200 rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2">Main LLM Test</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
-                    <span className={testResults.main_llm_test.status === 'success' ? 'text-green-600' : 'text-red-600'}>
-                      {testResults.main_llm_test.status}
+                    <span className={(testResults.main_llm_test as TestResult).status === 'success' ? 'text-green-600' : 'text-red-600'}>
+                      {(testResults.main_llm_test as TestResult).status as string}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Provider:</span>
-                    <span>{testResults.main_llm_test.provider}</span>
+                    <span>{(testResults.main_llm_test as TestResult).provider as string}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Model:</span>
-                    <span>{testResults.main_llm_test.model}</span>
+                    <span>{(testResults.main_llm_test as TestResult).model as string}</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Response Preview:</span>
                     <p className="mt-1 p-2 bg-gray-50 rounded text-gray-800">
-                      {testResults.main_llm_test.response_preview}
+                      {(testResults.main_llm_test as TestResult).response_preview as string}
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {testResults.fallback_llm_test && (
+            {(testResults.fallback_llm_test as TestResult) && (
               <div className="border border-gray-200 rounded-lg p-4">
                 <h4 className="font-medium text-gray-900 mb-2">Fallback LLM Test</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
-                    <span className={testResults.fallback_llm_test.status === 'success' ? 'text-green-600' : 'text-red-600'}>
-                      {testResults.fallback_llm_test.status}
+                    <span className={(testResults.fallback_llm_test as TestResult).status === 'success' ? 'text-green-600' : 'text-red-600'}>
+                      {(testResults.fallback_llm_test as TestResult).status as string}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Provider:</span>
-                    <span>{testResults.fallback_llm_test.provider}</span>
+                    <span>{(testResults.fallback_llm_test as TestResult).provider as string}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Model:</span>
-                    <span>{testResults.fallback_llm_test.model}</span>
+                    <span>{(testResults.fallback_llm_test as TestResult).model as string}</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Response Preview:</span>
                     <p className="mt-1 p-2 bg-gray-50 rounded text-gray-800">
-                      {testResults.fallback_llm_test.response_preview}
+                      {(testResults.fallback_llm_test as TestResult).response_preview as string}
                     </p>
                   </div>
                 </div>

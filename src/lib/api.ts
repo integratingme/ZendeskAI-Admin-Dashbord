@@ -1,6 +1,62 @@
 // API configuration and service functions
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
+// Response type interfaces
+interface AdminToken {
+  token_id: string;
+  token_preview: string;
+  created_at: string;
+  created_by: string;
+  last_used: string | null;
+  description: string;
+  is_active: boolean;
+}
+
+interface GenerateTokenResponse {
+  success: boolean;
+  token: string;
+  message: string;
+}
+
+interface TokenListResponse {
+  success: boolean;
+  data: {
+    count: number;
+    max_allowed: number;
+    tokens: {[key: string]: AdminToken};
+  };
+  message: string;
+}
+
+interface RevokeTokenResponse {
+  success: boolean;
+  message: string;
+}
+
+interface SubscriptionResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+  message: string;
+}
+
+interface AnalyticsResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+  message: string;
+}
+
+interface ProvidersResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+  message: string;
+}
+
+interface TestingResponse {
+  success: boolean;
+  data?: Record<string, unknown>;
+  message: string;
+}
+
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -44,8 +100,8 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
         ...this.getAuthHeaders(),
-        ...options.headers,
-      },
+        ...(options.headers as Record<string, string> || {}),
+      } as HeadersInit,
       ...options,
     };
 
@@ -80,19 +136,19 @@ class ApiService {
   }
 
   // Admin Tokens
-  async generateAdminToken(description: string, createdBy: string = 'admin') {
-    return this.request('/api/admin/tokens/generate', {
+  async generateAdminToken(description: string, createdBy: string = 'admin'): Promise<GenerateTokenResponse> {
+    return this.request<GenerateTokenResponse>('/api/admin/tokens/generate', {
       method: 'POST',
       body: JSON.stringify({ description, created_by: createdBy }),
     });
   }
 
-  async listAdminTokens() {
-    return this.request('/api/admin/tokens/list');
+  async listAdminTokens(): Promise<TokenListResponse> {
+    return this.request<TokenListResponse>('/api/admin/tokens/list');
   }
 
-  async revokeAdminToken(tokenId: string) {
-    return this.request(`/api/admin/tokens/${tokenId}`, {
+  async revokeAdminToken(tokenId: string): Promise<RevokeTokenResponse> {
+    return this.request<RevokeTokenResponse>(`/api/admin/tokens/${tokenId}`, {
       method: 'DELETE',
     });
   }
@@ -118,49 +174,49 @@ class ApiService {
       input_price_per_million: number;
       output_price_per_million: number;
     };
-  }) {
-    return this.request('/api/admin/subscriptions/generate', {
+  }): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>('/api/admin/subscriptions/generate', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async listSubscriptions(includeExpired: boolean = false) {
-    return this.request(`/api/admin/subscriptions/list?include_expired=${includeExpired}`);
+  async listSubscriptions(includeExpired: boolean = false): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/list?include_expired=${includeExpired}`);
   }
 
-  async getSubscriptionDetails(subscriptionKey: string) {
-    return this.request(`/api/admin/subscriptions/${subscriptionKey}`);
+  async getSubscriptionDetails(subscriptionKey: string): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}`);
   }
 
-  async deleteSubscription(subscriptionKey: string) {
-    return this.request(`/api/admin/subscriptions/${subscriptionKey}`, {
+  async deleteSubscription(subscriptionKey: string): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}`, {
       method: 'DELETE',
     });
   }
 
-  async cleanupExpiredSubscriptions() {
-    return this.request('/api/admin/subscriptions/cleanup-expired', {
+  async cleanupExpiredSubscriptions(): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>('/api/admin/subscriptions/cleanup-expired', {
       method: 'POST',
     });
   }
 
   // Analytics
-  async getAnalyticsOverview() {
-    return this.request('/api/admin/analytics/overview');
+  async getAnalyticsOverview(): Promise<AnalyticsResponse> {
+    return this.request<AnalyticsResponse>('/api/admin/analytics/overview');
   }
 
-  async getSubscriptionUsage(subscriptionKey: string) {
-    return this.request(`/api/admin/analytics/usage/${subscriptionKey}`);
+  async getSubscriptionUsage(subscriptionKey: string): Promise<AnalyticsResponse> {
+    return this.request<AnalyticsResponse>(`/api/admin/analytics/usage/${subscriptionKey}`);
   }
 
-  async getSubscriptionCosts(subscriptionKey: string) {
-    return this.request(`/api/admin/analytics/costs/${subscriptionKey}`);
+  async getSubscriptionCosts(subscriptionKey: string): Promise<AnalyticsResponse> {
+    return this.request<AnalyticsResponse>(`/api/admin/analytics/costs/${subscriptionKey}`);
   }
 
   // Providers
-  async listProviders() {
-    return this.request('/api/admin/providers/list');
+  async listProviders(): Promise<ProvidersResponse> {
+    return this.request<ProvidersResponse>('/api/admin/providers/list');
   }
 
   async testProviderConnection(data: {
@@ -168,32 +224,32 @@ class ApiService {
     model: string;
     endpoint: string;
     api_key: string;
-  }) {
-    return this.request('/api/admin/providers/test-connection', {
+  }): Promise<ProvidersResponse> {
+    return this.request<ProvidersResponse>('/api/admin/providers/test-connection', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getProviderModels(provider: string) {
-    return this.request(`/api/admin/providers/models/${provider}`);
+  async getProviderModels(provider: string): Promise<ProvidersResponse> {
+    return this.request<ProvidersResponse>(`/api/admin/providers/models/${provider}`);
   }
 
   // Testing
-  async getTestingUsers() {
-    return this.request('/api/admin/testing/users');
+  async getTestingUsers(): Promise<TestingResponse> {
+    return this.request<TestingResponse>('/api/admin/testing/users');
   }
 
-  async getUserLLMConfig(subscriptionKey: string) {
-    return this.request(`/api/admin/testing/users/${subscriptionKey}/config`);
+  async getUserLLMConfig(subscriptionKey: string): Promise<TestingResponse> {
+    return this.request<TestingResponse>(`/api/admin/testing/users/${subscriptionKey}/config`);
   }
 
   async testUserLLM(data: {
     subscription_key: string;
     llm_type: 'main' | 'fallback' | 'both';
     test_prompt?: string;
-  }) {
-    return this.request('/api/admin/testing/test-llm', {
+  }): Promise<TestingResponse> {
+    return this.request<TestingResponse>('/api/admin/testing/test-llm', {
       method: 'POST',
       body: JSON.stringify(data),
     });

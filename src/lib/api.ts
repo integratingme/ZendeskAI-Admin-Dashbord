@@ -96,12 +96,21 @@ class ApiService {
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Prepare headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...this.getAuthHeaders(),
+      ...(options.headers as Record<string, string> || {}),
+    };
+    
+    // Add ngrok-skip-browser-warning header if using ngrok
+    if (this.baseURL.includes('ngrok')) {
+      headers['ngrok-skip-browser-warning'] = 'true';
+    }
+    
     const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getAuthHeaders(),
-        ...(options.headers as Record<string, string> || {}),
-      } as HeadersInit,
+      headers: headers as HeadersInit,
       ...options,
     };
 
@@ -125,12 +134,23 @@ class ApiService {
   // Admin Authentication
   async testAdminToken(token: string): Promise<boolean> {
     try {
+      // Prepare headers
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+      };
+      
+      // Add ngrok-skip-browser-warning header if using ngrok
+      if (this.baseURL.includes('ngrok')) {
+        headers['ngrok-skip-browser-warning'] = 'true';
+      }
+      
       // Test token by calling a protected endpoint
       await this.request('/api/admin/analytics/overview', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers
       });
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Token test failed:', error);
       return false;
     }
   }

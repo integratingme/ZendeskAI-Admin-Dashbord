@@ -16,6 +16,8 @@ import {
 interface SidebarProps {
   activeSection: string;
   onSectionChange: (section: 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens') => void;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 const menuItems = [
@@ -27,7 +29,7 @@ const menuItems = [
   { id: 'tokens', label: 'Admin Tokens', icon: FiKey },
 ];
 
-export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
+export default function Sidebar({ activeSection, onSectionChange, isOpen = true, onToggle }: SidebarProps) {
   const { logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -44,8 +46,32 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
     setShowLogoutConfirm(false);
   };
 
+  const handleMenuItemClick = (section: Parameters<typeof onSectionChange>[0]) => {
+    onSectionChange(section);
+    // Close mobile menu after selection
+    if (onToggle && window.innerWidth < 768) {
+      onToggle();
+    }
+  };
+
   return (
-    <div className="admin-sidebar w-64 min-h-screen p-6">
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={onToggle}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={`
+        admin-sidebar fixed md:static inset-y-0 left-0 z-50
+        w-64 min-h-screen p-4 md:p-6 bg-white
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+      `}>
       <div className="mb-8">
         <h1 className="text-xl font-bold text-black">Admin Dashboard</h1>
         <p className="text-sm text-gray-600 mt-1">Zendesk AI Assistant</p>
@@ -57,14 +83,14 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           return (
             <button
               key={item.id}
-              onClick={() => onSectionChange(item.id as Parameters<typeof onSectionChange>[0])}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+              onClick={() => handleMenuItemClick(item.id as Parameters<typeof onSectionChange>[0])}
+              className={`w-full flex items-center gap-3 px-3 md:px-4 py-3 rounded-lg text-left transition-colors ${
                 activeSection === item.id
                   ? 'bg-black text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               }`}
             >
-              <IconComponent className="text-lg" />
+              <IconComponent className="text-lg flex-shrink-0" />
               <span className="font-medium">{item.label}</span>
             </button>
           );
@@ -74,9 +100,9 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
       <div className="mt-8 pt-6 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors text-red-600 hover:bg-red-50 mb-4"
+          className="w-full flex items-center gap-3 px-3 md:px-4 py-3 rounded-lg text-left transition-colors text-red-600 hover:bg-red-50 mb-4"
         >
-          <FiLogOut className="text-lg" />
+          <FiLogOut className="text-lg flex-shrink-0" />
           <span className="font-medium">Logout</span>
         </button>
         
@@ -84,6 +110,7 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
           <p>Version 1.0.0</p>
           <p className="mt-1">Copyright 2025 IntegratingMe</p>
         </div>
+      </div>
       </div>
 
       <ConfirmDialog
@@ -96,6 +123,6 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
         onConfirm={confirmLogout}
         onCancel={cancelLogout}
       />
-    </div>
+    </>
   );
 }

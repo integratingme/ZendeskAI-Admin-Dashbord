@@ -90,7 +90,7 @@ class ApiService {
     }
   }
 
-  getAuthHeaders() {
+  getAuthHeaders(): Record<string, string> {
     return this.adminToken ? { 'Authorization': `Bearer ${this.adminToken}` } : {};
   }
 
@@ -98,10 +98,13 @@ class ApiService {
     const url = `${this.baseURL}${endpoint}`;
     
     // Prepare headers
+    const authHeaders = this.getAuthHeaders();
+    const optionHeaders = (options.headers as Record<string, string>) || {};
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...this.getAuthHeaders(),
-      ...(options.headers as Record<string, string> || {}),
+      ...authHeaders,
+      ...optionHeaders,
     };
     
     // Add ngrok-skip-browser-warning header if using ngrok

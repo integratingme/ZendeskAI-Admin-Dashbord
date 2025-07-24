@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { 
   FiBarChart2, 
   FiUsers, 
@@ -27,11 +29,19 @@ const menuItems = [
 
 export default function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const { logout } = useAuth();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
-      logout();
-    }
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    logout();
+    setShowLogoutConfirm(false);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   return (
@@ -72,9 +82,20 @@ export default function Sidebar({ activeSection, onSectionChange }: SidebarProps
         
         <div className="text-xs text-gray-500">
           <p>Version 1.0.0</p>
-          <p className="mt-1">© 2025 IntegratingMe</p>
+          <p className="mt-1">Copyright 2025 IntegratingMe</p>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? You will need to enter your admin token again to access the dashboard."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
     </div>
   );
 }

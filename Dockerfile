@@ -1,16 +1,5 @@
 FROM node:18-alpine AS base
 
-FROM base AS deps
-
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN \
-    if [ -f package-lock.json ]; then npm ci --only=production; \
-    else echo "Lockfile not found." && exit 1; \
-    fi
-
 FROM base AS build-deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -24,6 +13,9 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=build-deps /app/node_modules ./node_modules
 COPY . .
+
+# TODO: remove this
+ENV NEXT_PUBLIC_API_BASE_URL=https://ga.indesk.ai
 
 RUN npm run build
 

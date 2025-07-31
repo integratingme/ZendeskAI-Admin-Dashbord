@@ -9,8 +9,10 @@ import Analytics from '@/components/Analytics';
 import Providers from '@/components/Providers';
 import Testing from '@/components/Testing';
 import AdminTokens from '@/components/AdminTokens';
+import FeatureManagement from '@/components/FeatureManagement';
+import TierTemplates from '@/components/TierTemplates';
 
-type ActiveSection = 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens';
+type ActiveSection = 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens' | 'features' | 'templates';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
@@ -30,6 +32,10 @@ export default function AdminDashboard() {
         return <Testing />;
       case 'tokens':
         return <AdminTokens />;
+      case 'features':
+        return <FeatureManagement />;
+      case 'templates':
+        return <TierTemplates />;
       default:
         return <Overview />;
     }
@@ -49,6 +55,10 @@ export default function AdminDashboard() {
         return 'Testing';
       case 'tokens':
         return 'Admin Tokens';
+      case 'features':
+        return 'Feature Management';
+      case 'templates':
+        return 'Tier Templates';
       default:
         return 'Overview';
     }
@@ -66,14 +76,21 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col md:ml-0">
         {/* Mobile Header */}
-        <header className="md:hidden bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+        <header className="md:hidden p-4 flex items-center justify-between" style={{ background: 'var(--background)', borderBottom: '1px solid var(--border)' }}>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: 'var(--foreground)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
-            <FiMenu className="text-xl text-gray-700" />
+            <FiMenu className="text-xl" />
           </button>
-          <h1 className="text-lg font-semibold text-black">{getSectionTitle()}</h1>
+          <h1 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{getSectionTitle()}</h1>
           <div className="w-10" /> {/* Spacer for centering */}
         </header>
 

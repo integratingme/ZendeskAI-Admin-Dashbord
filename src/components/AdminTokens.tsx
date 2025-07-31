@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { apiService, ApiError } from '@/lib/api';
 import { useToastContext } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 interface AdminToken {
@@ -13,6 +14,7 @@ interface AdminToken {
   last_used: string | null;
   description: string;
   is_active: boolean;
+  is_current_token?: boolean;
 }
 
 interface TokensData {
@@ -34,9 +36,11 @@ export default function AdminTokens() {
     isOpen: boolean;
     tokenId: string;
     tokenDescription: string;
+    isCurrentToken?: boolean;
   }>({ isOpen: false, tokenId: '', tokenDescription: '' });
   
   const toast = useToastContext();
+  const { logout } = useAuth();
 
   useEffect(() => {
     fetchTokens();
@@ -101,22 +105,33 @@ export default function AdminTokens() {
   };
 
   const handleRevokeClick = (tokenId: string, description: string) => {
+    // Check if this is the current user's token using the backend-provided flag
+    const isCurrentToken = tokensData?.tokens[tokenId]?.is_current_token || false;
+
     setConfirmDialog({
       isOpen: true,
       tokenId,
-      tokenDescription: description
+      tokenDescription: description,
+      isCurrentToken
     });
   };
 
   const confirmRevoke = async () => {
-    const { tokenId } = confirmDialog;
+    const { tokenId, isCurrentToken } = confirmDialog;
     setConfirmDialog({ isOpen: false, tokenId: '', tokenDescription: '' });
 
     try {
       const response = await apiService.revokeAdminToken(tokenId);
       if (response.success) {
-        await fetchTokens();
-        toast.success('Token Revoked', 'Admin token has been successfully revoked');
+        if (isCurrentToken) {
+          // If user deleted their own token, log them out
+          toast.success('Token Revoked', 'You have been logged out because you deleted your authentication token');
+          logout(); // This will redirect to login page
+        } else {
+          // Normal token deletion
+          await fetchTokens();
+          toast.success('Token Revoked', 'Admin token has been successfully revoked');
+        }
       } else {
         throw new Error(response.message || 'Failed to revoke token');
       }
@@ -131,7 +146,7 @@ export default function AdminTokens() {
   };
 
   const cancelRevoke = () => {
-    setConfirmDialog({ isOpen: false, tokenId: '', tokenDescription: '' });
+    setConfirmDialog({ isOpen: false, tokenId: '', tokenDescription: '', isCurrentToken: false });
   };
 
   const formatDate = (dateString: string | null) => {
@@ -159,7 +174,7 @@ export default function AdminTokens() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">Admin Tokens</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Admin Tokens</h1>
           <button 
             onClick={fetchTokens}
             className="admin-button-outline px-4 py-2 rounded-lg"
@@ -183,7 +198,7 @@ export default function AdminTokens() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-black">Admin Tokens</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Admin Tokens</h1>
         <div className="flex gap-3">
           <button 
             onClick={fetchTokens}
@@ -245,9 +260,23 @@ export default function AdminTokens() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200" style={{ background: 'var(--card-bg)' }}>
                 {Object.entries(tokensData.tokens).map(([tokenId, token]) => (
-                  <tr key={tokenId} className="hover:bg-gray-50">
+                  <tr key={tokenId} className="hover:bg-gray-50" 
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+                        const cells = e.currentTarget.querySelectorAll('td, th');
+                        cells.forEach(cell => {
+                          (cell as HTMLElement).style.color = 'var(--foreground)';
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        const cells = e.currentTarget.querySelectorAll('td, th');
+                        cells.forEach(cell => {
+                          (cell as HTMLElement).style.color = 'var(--foreground)';
+                        });
+                      }}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">{tokenId}</div>
@@ -301,8 +330,8 @@ export default function AdminTokens() {
 
       {/* Create Token Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'var(--modal-overlay)' }}>
+          <div className="rounded-lg p-6 w-full max-w-md" style={{ background: 'var(--card-bg)' }}>
             <h2 className="text-lg font-semibold mb-4">Create Admin Token</h2>
             <div className="space-y-4">
               <div>
@@ -354,13 +383,13 @@ export default function AdminTokens() {
 
       {/* New Token Display */}
       {newToken && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'var(--modal-overlay)' }}>
+          <div className="rounded-lg p-6 w-full max-w-md" style={{ background: 'var(--card-bg)' }}>
             <h2 className="text-lg font-semibold mb-4">Token Created Successfully</h2>
             <div className="bg-gray-50 p-4 rounded-lg mb-4">
               <p className="text-sm text-gray-600 mb-2">Your new admin token:</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 bg-white p-2 rounded border text-sm font-mono break-all">
+                <code className="flex-1 p-2 rounded border text-sm font-mono break-all" style={{ background: 'var(--muted)', color: 'var(--foreground)' }}>
                   {newToken}
                 </code>
                 <button 
@@ -388,8 +417,12 @@ export default function AdminTokens() {
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Revoke Admin Token"
-        message={`Are you sure you want to revoke the token "${confirmDialog.tokenDescription}"? This action cannot be undone and will immediately disable access for this token.`}
-        confirmText="Revoke Token"
+        message={
+          confirmDialog.isCurrentToken
+            ? `⚠️ WARNING: You are about to revoke the token "${confirmDialog.tokenDescription}" which appears to be your current authentication token. This will immediately log you out of the admin dashboard. Are you sure you want to continue?`
+            : `Are you sure you want to revoke the token "${confirmDialog.tokenDescription}"? This action cannot be undone and will immediately disable access for this token.`
+        }
+        confirmText={confirmDialog.isCurrentToken ? "Revoke & Logout" : "Revoke Token"}
         cancelText="Cancel"
         type="danger"
         onConfirm={confirmRevoke}

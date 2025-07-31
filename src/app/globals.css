@@ -6,6 +6,22 @@
   --border: #e5e5e5;
   --muted: #f5f5f5;
   --accent: #000000;
+  --card-bg: #ffffff;
+  --sidebar-bg: #fafafa;
+  --hover-bg: #f5f5f5;
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] {
+  --background: #1a1a1a;
+  --foreground: #e5e5e5;
+  --border: #404040;
+  --muted: #2a2a2a;
+  --accent: #E75C4A;
+  --card-bg: #262626;
+  --sidebar-bg: #1f1f1f;
+  --hover-bg: #333333;
+  --modal-overlay: rgba(0, 0, 0, 0.7);
 }
 
 @theme inline {
@@ -21,21 +37,25 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-maven-pro), system-ui, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Admin Dashboard Styles */
 .admin-container {
   min-height: 100vh;
-  background: white;
+  background: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 .admin-sidebar {
-  background: #fafafa;
+  background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .admin-content {
-  background: white;
+  background: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 /* Mobile Responsive Utilities */
@@ -63,28 +83,184 @@ body {
 }
 
 .admin-card {
-  background: white;
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .admin-button {
-  background: black;
+  background: var(--accent);
   color: white;
-  border: 1px solid black;
+  border: 1px solid var(--accent);
   transition: all 0.2s ease;
 }
 
 .admin-button:hover {
-  background: #333;
+  background: var(--accent);
+  opacity: 0.9;
+  color: white;
 }
 
 .admin-button-outline {
-  background: white;
-  color: black;
+  background: var(--background);
+  color: var(--foreground);
   border: 1px solid var(--border);
 }
 
 .admin-button-outline:hover {
-  background: var(--muted);
+  background: var(--hover-bg);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  background: var(--card-bg);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: var(--hover-bg);
+}
+
+/* Global text color overrides for theme support */
+.text-gray-600,
+.text-gray-700,
+.text-gray-800,
+.text-gray-900 {
+  color: var(--foreground) !important;
+  opacity: 0.7;
+  transition: color 0.3s ease;
+}
+
+/* Table row hover effects */
+.hover\:bg-gray-50:hover {
+  background: var(--hover-bg) !important;
+  color: var(--foreground) !important;
+}
+
+.hover\:bg-gray-50:hover * {
+  color: var(--foreground) !important;
+}
+
+.text-gray-500 {
+  color: var(--foreground) !important;
+  opacity: 0.6;
+  transition: color 0.3s ease;
+}
+
+.text-gray-400 {
+  color: var(--foreground) !important;
+  opacity: 0.5;
+  transition: color 0.3s ease;
+}
+
+/* Table styling for dark theme */
+.bg-white {
+  background: var(--card-bg) !important;
+  transition: background-color 0.3s ease;
+}
+
+.divide-gray-200 > * + * {
+  border-color: var(--border) !important;
+  transition: border-color 0.3s ease;
+}
+
+.border-gray-200,
+.border-gray-300 {
+  border-color: var(--border) !important;
+  transition: border-color 0.3s ease;
+}
+
+/* Fix white backgrounds in components */
+.bg-gray-50,
+.bg-gray-100 {
+  background: var(--muted) !important;
+  transition: background-color 0.3s ease;
+}
+
+/* Table headers and cells */
+th, td {
+  color: var(--foreground) !important;
+  transition: color 0.3s ease;
+}
+
+/* Specific component fixes */
+.text-black {
+  color: var(--foreground) !important;
+  transition: color 0.3s ease;
+}
+
+/* Provider usage dots */
+.bg-black {
+  background: var(--accent) !important;
+  transition: background-color 0.3s ease;
+}
+
+/* Modal and card headers */
+h2, h3, h4, h5, h6 {
+  color: var(--foreground) !important;
+  transition: color 0.3s ease;
+}
+
+/* Labels and form text */
+label {
+  color: var(--foreground) !important;
+  transition: color 0.3s ease;
+}
+
+/* Form elements */
+input, select, textarea {
+  background: var(--card-bg) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent) !important;
+}
+
+/* Universal smooth transitions for all elements */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Preserve existing transitions for interactive elements */
+button, a, .admin-button, .admin-button-outline, .theme-toggle {
+  transition: all 0.2s ease !important;
+}
+
+/* Toggle switch ripple animation */
+@keyframes toggleRipple {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* Hide calendar icons in date inputs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+input[type="date"]::-webkit-inner-spin-button {
+  display: none !important;
+}
+
+/* Firefox */
+input[type="date"]::-moz-calendar-picker-indicator {
+  display: none !important;
 }

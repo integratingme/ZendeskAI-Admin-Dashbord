@@ -10,6 +10,7 @@ interface AdminToken {
   last_used: string | null;
   description: string;
   is_active: boolean;
+  is_current_token?: boolean;
 }
 
 interface GenerateTokenResponse {
@@ -179,8 +180,11 @@ class ApiService {
   // Subscriptions
   async createSubscription(data: {
     customer_email: string;
-    zendesk_subdomain: string;
-    subscription_days: number;
+    zendesk_subdomain?: string;
+    start_date: string;
+    end_date: string;
+    tier_template?: string;
+    request_limit: number;
     main_llm: {
       provider: string;
       endpoint: string;
@@ -197,6 +201,7 @@ class ApiService {
       input_price_per_million: number;
       output_price_per_million: number;
     };
+    features_config?: Record<string, unknown>;
   }): Promise<SubscriptionResponse> {
     return this.request<SubscriptionResponse>('/api/admin/subscriptions/generate', {
       method: 'POST',
@@ -212,8 +217,50 @@ class ApiService {
     return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}`);
   }
 
+  async updateSubscription(subscriptionKey: string, data: {
+    customer_email?: string;
+    zendesk_subdomain?: string;
+    start_date?: string;
+    end_date?: string;
+    tier_template?: string;
+    request_limit?: number;
+    main_llm?: {
+      provider: string;
+      endpoint: string;
+      model: string;
+      api_key: string;
+      input_price_per_million: number;
+      output_price_per_million: number;
+    };
+    fallback_llm?: {
+      provider: string;
+      endpoint: string;
+      model: string;
+      api_key: string;
+      input_price_per_million: number;
+      output_price_per_million: number;
+    };
+  }): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   async deleteSubscription(subscriptionKey: string): Promise<SubscriptionResponse> {
     return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async reactivateSubscription(subscriptionKey: string): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}/reactivate`, {
+      method: 'POST',
+    });
+  }
+
+  async permanentlyDeleteSubscription(subscriptionKey: string): Promise<SubscriptionResponse> {
+    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/${subscriptionKey}/permanent`, {
       method: 'DELETE',
     });
   }
@@ -277,6 +324,76 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Tier Templates
+  async getTierTemplates(): Promise<{ success: boolean; data?: Record<string, unknown> }> {
+    return this.request('/api/admin/tier-templates/list');
+  }
+
+  async getTierTemplate(tierName: string): Promise<{ success: boolean; data?: unknown }> {
+    return this.request(`/api/admin/tier-templates/${tierName}`);
+  }
+
+  async reloadTierTemplates(): Promise<{ success: boolean; message?: string }> {
+    return this.request('/api/admin/tier-templates/reload', {
+      method: 'POST',
+    });
+  }
+
+  async createTemplateFromSubscription(subscriptionKey: string, templateData: {
+    name: string;
+    display_name: string;
+    description: string;
+  }): Promise<{ success: boolean; message?: string }> {
+    return this.request('/api/admin/tier-templates/create-from-subscription', {
+      method: 'POST',
+      body: JSON.stringify({
+        subscription_key: subscriptionKey,
+        template_data: templateData
+      }),
+    });
+  }
+
+  // Features
+  async getAvailableFeatures(): Promise<{ 
+    success: boolean; 
+    data?: Record<string, {
+      name: string;
+      display_name: string;
+      description: string;
+      category: string;
+    }>
+  }> {
+    return this.request('/api/admin/features/available');
+  }
+
+  async getSubscriptionFeatures(subscriptionKey: string): Promise<{ success: boolean; data?: Record<string, unknown> }> {
+    return this.request(`/api/admin/features/subscription/${subscriptionKey}`);
+  }
+
+  async getFeatureConfig(subscriptionKey: string, featureName: string): Promise<{ success: boolean; data?: unknown }> {
+    return this.request(`/api/admin/features/subscription/${subscriptionKey}/${featureName}`);
+  }
+
+  async saveAndTestFeature(subscriptionKey: string, featureName: string, config: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
+    console.log('Saving feature config:', { subscriptionKey, featureName, config });
+    return this.request(`/api/admin/features/subscription/${subscriptionKey}/${featureName}/save-and-test`, {
+      method: 'PUT',
+      body: JSON.stringify({ config }),
+    });
+  }
+
+  async testFeatureLLM(data: {
+    subscription_key: string;
+    feature_name: string;
+    test_prompt?: string;
+  }): Promise<{ success: boolean; message?: string }> {
+    return this.request('/api/admin/features/test-llm', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
 }
 
 // Create singleton instance

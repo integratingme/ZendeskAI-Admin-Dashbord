@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Maven_Pro } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 const mavenPro = Maven_Pro({
   variable: "--font-maven-pro",
@@ -21,9 +22,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${mavenPro.variable} font-sans antialiased bg-white text-black`}
+        className={`${mavenPro.variable} font-sans antialiased`}
+        style={{ 
+          background: 'var(--background)', 
+          color: 'var(--foreground)' 
+        }}
       >
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

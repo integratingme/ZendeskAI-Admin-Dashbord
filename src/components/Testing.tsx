@@ -12,7 +12,9 @@ interface TestUser {
   subscription_key: string;
   customer_email: string;
   zendesk_subdomain: string;
-  subscription_days: number;
+  subscription_days: number | null;
+  start_date?: string;
+  end_date?: string;
   main_provider: string;
   fallback_provider: string;
   last_main_used: string | null;
@@ -123,6 +125,24 @@ export default function Testing() {
     return new Date(dateString).toLocaleString();
   };
 
+  const calculateDaysRemaining = (user: TestUser) => {
+    // For legacy subscriptions, use subscription_days if available
+    if (user.subscription_days !== null && user.subscription_days !== undefined) {
+      return user.subscription_days;
+    }
+    
+    // For new subscriptions, calculate from end_date
+    if (user.end_date) {
+      const endDate = new Date(user.end_date);
+      const today = new Date();
+      const diffTime = endDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays); // Don't show negative days
+    }
+    
+    return 0;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -138,7 +158,7 @@ export default function Testing() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">LLM Testing</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>LLM Testing</h1>
           <button 
             onClick={fetchUsers}
             className="admin-button-outline px-4 py-2 rounded-lg"
@@ -162,7 +182,7 @@ export default function Testing() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-black">LLM Testing</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>LLM Testing</h1>
         <button 
           onClick={fetchUsers}
           className="admin-button-outline px-4 py-2 rounded-lg"
@@ -173,7 +193,7 @@ export default function Testing() {
 
       {/* User Selection */}
       <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">Select User for Testing</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Select User for Testing</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {users.map((user) => (
             <div 
@@ -187,7 +207,7 @@ export default function Testing() {
             >
               <div className="flex items-center justify-between mb-2">
                 <h4 className="font-medium text-gray-900">{user.customer_email}</h4>
-                <span className="text-sm text-gray-500">{user.subscription_days}d</span>
+                <span className="text-sm text-gray-500">{calculateDaysRemaining(user)}d</span>
               </div>
               <p className="text-sm text-gray-600 mb-2">{user.zendesk_subdomain}</p>
               <div className="flex items-center justify-between text-xs text-gray-500">
@@ -205,7 +225,7 @@ export default function Testing() {
       {/* Test Configuration */}
       {selectedUser && (
         <div className="admin-card p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Test Configuration</h3>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Test Configuration</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Test Type:</label>
@@ -250,7 +270,7 @@ export default function Testing() {
       {/* Test Results */}
       {testResults && (
         <div className="admin-card p-6">
-          <h3 className="text-lg font-semibold text-black mb-4">Test Results</h3>
+          <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Test Results</h3>
           
           
           <div className="space-y-4">

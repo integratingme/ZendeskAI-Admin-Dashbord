@@ -113,10 +113,10 @@ export default function Overview() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-black">Overview</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Overview</h1>
         <button 
           onClick={fetchOverviewStats}
-          className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+          className="admin-button-outline px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <FiRefreshCw className="text-sm" />
           Refresh
@@ -128,8 +128,8 @@ export default function Overview() {
         <div className="admin-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-600">Total Subscriptions</h3>
-              <p className="text-3xl font-bold text-black mt-2">{stats.total_subscriptions || 0}</p>
+              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Subscriptions</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>{stats.total_subscriptions || 0}</p>
             </div>
             <FiUsers className="text-2xl text-gray-400" />
           </div>
@@ -138,8 +138,8 @@ export default function Overview() {
         <div className="admin-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-600">Total Cost</h3>
-              <p className="text-3xl font-bold text-black mt-2">${stats.total_cost_usd?.toFixed(2) || '0.00'}</p>
+              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Cost</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>${stats.total_cost_usd?.toFixed(2) || '0.00'}</p>
             </div>
             <FiDollarSign className="text-2xl text-gray-400" />
           </div>
@@ -148,8 +148,8 @@ export default function Overview() {
         <div className="admin-card p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-600">Total Requests</h3>
-              <p className="text-3xl font-bold text-black mt-2">{stats.total_requests?.toLocaleString() || '0'}</p>
+              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Requests</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>{stats.total_requests?.toLocaleString() || '0'}</p>
             </div>
             <FiActivity className="text-2xl text-gray-400" />
           </div>
@@ -159,7 +159,7 @@ export default function Overview() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-medium text-gray-600">Avg Cost/Sub</h3>
-              <p className="text-3xl font-bold text-black mt-2">${stats.average_cost_per_subscription?.toFixed(2) || '0.00'}</p>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>${stats.average_cost_per_subscription?.toFixed(2) || '0.00'}</p>
             </div>
             <FiTrendingUp className="text-2xl text-gray-400" />
           </div>
@@ -168,18 +168,18 @@ export default function Overview() {
 
       {/* Subscription Duration Breakdown */}
       <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">Subscription Duration Breakdown</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Subscription Duration Breakdown</h3>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown?.["30"] || 0}</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["30"] || 0}</p>
             <p className="text-sm text-gray-600">30 Days</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown?.["90"] || 0}</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["90"] || 0}</p>
             <p className="text-sm text-gray-600">90 Days</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-black">{stats.subscription_days_breakdown?.["365"] || 0}</p>
+            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["365"] || 0}</p>
             <p className="text-sm text-gray-600">365 Days</p>
           </div>
         </div>
@@ -187,12 +187,12 @@ export default function Overview() {
 
       {/* Provider Usage */}
       <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">Provider Usage</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Provider Usage</h3>
         <div className="space-y-4">
           {Object.entries(stats.provider_usage || {}).map(([provider, usage]) => (
             <div key={provider} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-black rounded-full"></div>
+                <div className="w-3 h-3 rounded-full" style={{ background: 'var(--accent)' }}></div>
                 <span className="font-medium capitalize">{provider}</span>
               </div>
               <div className="text-right">
@@ -207,7 +207,7 @@ export default function Overview() {
 
       {/* System Health */}
       <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">System Health</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>System Health</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-gray-600">API Status</span>

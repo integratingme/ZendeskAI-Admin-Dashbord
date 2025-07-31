@@ -30,24 +30,58 @@ interface SubscriptionData {
   [key: string]: unknown;
 }
 
+interface FeatureCustomLLM {
+  feature_name: string;
+  main_llm?: {
+    provider: string;
+    model: string;
+    total_cost_usd: number;
+    total_requests: number;
+    total_tokens: number;
+    last_used?: string;
+  };
+  fallback_llm?: {
+    provider: string;
+    model: string;
+    total_cost_usd: number;
+    total_requests: number;
+    total_tokens: number;
+    last_used?: string;
+    fallback_usage_count?: number;
+  };
+  total_cost_usd: number;
+  total_requests: number;
+  total_tokens: number;
+}
+
 interface SubscriptionCosts {
   success: boolean;
   subscription_key: string;
   cost_breakdown: {
-    main_llm: {
-      provider: string;
-      model: string;
-      total_cost_usd: number;
-      total_requests: number;
-      total_tokens: number;
+    subscription_default_llms: {
+      main_llm: {
+        provider: string;
+        model: string;
+        total_cost_usd: number;
+        total_requests: number;
+        total_tokens: number;
+      };
+      fallback_llm: {
+        provider: string;
+        model: string;
+        total_cost_usd: number;
+        total_requests: number;
+        total_tokens: number;
+        fallback_usage_count: number;
+      };
+      subtotal_cost_usd: number;
+      subtotal_requests: number;
     };
-    fallback_llm: {
-      provider: string;
-      model: string;
+    feature_custom_llms: Record<string, FeatureCustomLLM>;
+    feature_custom_summary: {
+      total_features_with_custom_llm: number;
       total_cost_usd: number;
       total_requests: number;
-      total_tokens: number;
-      fallback_usage_count: number;
     };
     total_cost_usd: number;
     total_requests: number;
@@ -161,12 +195,12 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-black">Analytics</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Analytics</h1>
       </div>
 
       {/* Subscription Selector */}
       <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">Subscription Analytics</h3>
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Subscription Analytics</h3>
         <div className="flex gap-4 items-center">
           <label className="text-sm font-medium text-gray-700">Select Subscription:</label>
           <select 
@@ -207,26 +241,26 @@ export default function Analytics() {
         <div className="space-y-6">
           {/* Usage Stats */}
           <div className="admin-card p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Usage Statistics</h3>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Usage Statistics</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-medium text-gray-900 mb-3">Main LLM</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Requests:</span>
-                    <span className="font-medium">{usageData.usage_stats.main_llm_usage.total_requests.toLocaleString()}</span>
+                    <span className="font-medium">{usageData.usage_stats?.main_llm_usage?.total_requests?.toLocaleString() || '0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Input Tokens:</span>
-                    <span className="font-medium">{usageData.usage_stats.main_llm_usage.total_input_tokens.toLocaleString()}</span>
+                    <span className="font-medium">{usageData.usage_stats?.main_llm_usage?.total_input_tokens?.toLocaleString() || '0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Output Tokens:</span>
-                    <span className="font-medium">{usageData.usage_stats.main_llm_usage.total_output_tokens.toLocaleString()}</span>
+                    <span className="font-medium">{usageData.usage_stats?.main_llm_usage?.total_output_tokens?.toLocaleString() || '0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Cost:</span>
-                    <span className="font-medium">${usageData.usage_stats.main_llm_usage.estimated_cost_usd.toFixed(6)}</span>
+                    <span className="font-medium">${(usageData.usage_stats?.main_llm_usage?.estimated_cost_usd || 0).toFixed(6)}</span>
                   </div>
                 </div>
               </div>
@@ -235,19 +269,19 @@ export default function Analytics() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Requests:</span>
-                    <span className="font-medium">{usageData.usage_stats.fallback_llm_usage.total_requests.toLocaleString()}</span>
+                    <span className="font-medium">{usageData.usage_stats?.fallback_llm_usage?.total_requests?.toLocaleString() || '0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Input Tokens:</span>
-                    <span className="font-medium">{usageData.usage_stats.fallback_llm_usage.total_input_tokens.toLocaleString()}</span>
+                    <span className="font-medium">{usageData.usage_stats?.fallback_llm_usage?.total_input_tokens?.toLocaleString() || '0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Output Tokens:</span>
-                    <span className="font-medium">{usageData.usage_stats.fallback_llm_usage.total_output_tokens.toLocaleString()}</span>
+                    <span className="font-medium">{usageData.usage_stats?.fallback_llm_usage?.total_output_tokens?.toLocaleString() || '0'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Cost:</span>
-                    <span className="font-medium">${usageData.usage_stats.fallback_llm_usage.estimated_cost_usd.toFixed(6)}</span>
+                    <span className="font-medium">${(usageData.usage_stats?.fallback_llm_usage?.estimated_cost_usd || 0).toFixed(6)}</span>
                   </div>
                 </div>
               </div>
@@ -256,32 +290,97 @@ export default function Analytics() {
 
           {/* Cost Breakdown */}
           <div className="admin-card p-6">
-            <h3 className="text-lg font-semibold text-black mb-4">Cost Breakdown</h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium">Main LLM ({costsData.cost_breakdown.main_llm.provider})</p>
-                  <p className="text-sm text-gray-600">{costsData.cost_breakdown.main_llm.model}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">${costsData.cost_breakdown.main_llm.total_cost_usd.toFixed(6)}</p>
-                  <p className="text-sm text-gray-600">{costsData.cost_breakdown.main_llm.total_requests} requests</p>
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Cost Breakdown</h3>
+            <div className="space-y-6">
+              
+              {/* Subscription Default LLMs */}
+              <div>
+                <h4 className="font-medium text-gray-900 mb-3">Subscription Default LLMs</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Main LLM ({costsData.cost_breakdown.subscription_default_llms.main_llm.provider})</p>
+                      <p className="text-sm text-gray-600">{costsData.cost_breakdown.subscription_default_llms.main_llm.model}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">${costsData.cost_breakdown.subscription_default_llms.main_llm.total_cost_usd.toFixed(6)}</p>
+                      <p className="text-sm text-gray-600">{costsData.cost_breakdown.subscription_default_llms.main_llm.total_requests} requests</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="font-medium">Fallback LLM ({costsData.cost_breakdown.subscription_default_llms.fallback_llm.provider})</p>
+                      <p className="text-sm text-gray-600">{costsData.cost_breakdown.subscription_default_llms.fallback_llm.model}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">${costsData.cost_breakdown.subscription_default_llms.fallback_llm.total_cost_usd.toFixed(6)}</p>
+                      <p className="text-sm text-gray-600">{costsData.cost_breakdown.subscription_default_llms.fallback_llm.total_requests} requests</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-t border-gray-200">
+                    <span className="font-medium">Subscription Default Subtotal:</span>
+                    <span className="font-medium">${costsData.cost_breakdown.subscription_default_llms.subtotal_cost_usd.toFixed(6)}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+
+              {/* Feature Custom LLMs */}
+              {costsData.cost_breakdown.feature_custom_summary.total_features_with_custom_llm > 0 && (
                 <div>
-                  <p className="font-medium">Fallback LLM ({costsData.cost_breakdown.fallback_llm.provider})</p>
-                  <p className="text-sm text-gray-600">{costsData.cost_breakdown.fallback_llm.model}</p>
+                  <h4 className="font-medium text-gray-900 mb-3">Feature-Specific Custom LLMs</h4>
+                  <div className="space-y-3">
+                    {Object.entries(costsData.cost_breakdown.feature_custom_llms).map(([featureName, featureData]) => (
+                      <div key={featureName}>
+                        {featureData.main_llm && (
+                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="font-medium">{featureName.replace(/_/g, ' ')} - Main LLM ({featureData.main_llm.provider})</p>
+                              <p className="text-sm text-gray-600">{featureData.main_llm.model}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">${featureData.main_llm.total_cost_usd.toFixed(6)}</p>
+                              <p className="text-sm text-gray-600">{featureData.main_llm.total_requests} requests</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {featureData.fallback_llm && (
+                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="font-medium">{featureName.replace(/_/g, ' ')} - Fallback LLM ({featureData.fallback_llm.provider})</p>
+                              <p className="text-sm text-gray-600">
+                                {featureData.fallback_llm.model}
+                                {featureData.fallback_llm.fallback_usage_count && 
+                                  ` • Used ${featureData.fallback_llm.fallback_usage_count} times`
+                                }
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">${featureData.fallback_llm.total_cost_usd.toFixed(6)}</p>
+                              <p className="text-sm text-gray-600">{featureData.fallback_llm.total_requests} requests</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border-t border-gray-200">
+                      <span className="font-medium">Feature Custom LLMs Subtotal:</span>
+                      <span className="font-medium">${costsData.cost_breakdown.feature_custom_summary.total_cost_usd.toFixed(6)}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">${costsData.cost_breakdown.fallback_llm.total_cost_usd.toFixed(6)}</p>
-                  <p className="text-sm text-gray-600">{costsData.cost_breakdown.fallback_llm.total_requests} requests</p>
-                </div>
-              </div>
+              )}
+
+              {/* Total */}
               <div className="border-t pt-4">
-                <div className="flex items-center justify-between font-semibold">
+                <div className="flex items-center justify-between font-semibold text-lg">
                   <span>Total Cost:</span>
                   <span>${costsData.cost_breakdown.total_cost_usd.toFixed(6)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-gray-600 mt-1">
+                  <span>Total Requests:</span>
+                  <span>{costsData.cost_breakdown.total_requests.toLocaleString()}</span>
                 </div>
               </div>
             </div>

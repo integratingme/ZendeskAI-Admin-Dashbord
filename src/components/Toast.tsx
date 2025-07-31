@@ -43,13 +43,13 @@ function ToastItem({ toast, onRemove }: ToastProps) {
   const getStyles = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-white border-green-200 text-green-800';
+        return 'border-green-200 text-green-800';
       case 'error':
-        return 'bg-white border-red-200 text-red-800';
+        return 'border-red-200 text-red-800';
       case 'warning':
-        return 'bg-white border-yellow-200 text-yellow-800';
+        return 'border-yellow-200 text-yellow-800';
       case 'info':
-        return 'bg-white border-blue-200 text-blue-800';
+        return 'border-blue-200 text-blue-800';
     }
   };
 
@@ -72,7 +72,8 @@ function ToastItem({ toast, onRemove }: ToastProps) {
       transform transition-all duration-300 ease-in-out
       hover:shadow-xl font-sans
       ${getStyles()}
-    `}>
+    `}
+    style={{ background: 'var(--card-bg)' }}>
       <div className={`
         flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
         ${getIconBg()}
@@ -81,11 +82,11 @@ function ToastItem({ toast, onRemove }: ToastProps) {
       </div>
       
       <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-black text-sm">
+        <h4 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>
           {toast.title}
         </h4>
         {toast.message && (
-          <p className="text-gray-600 text-sm mt-1">
+          <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
             {toast.message}
           </p>
         )}
@@ -93,7 +94,14 @@ function ToastItem({ toast, onRemove }: ToastProps) {
       
       <button
         onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+        className="flex-shrink-0 transition-colors"
+        style={{ color: 'var(--foreground)', opacity: 0.5 }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.opacity = '0.8';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.opacity = '0.5';
+        }}
       >
         <FiX className="text-lg" />
       </button>

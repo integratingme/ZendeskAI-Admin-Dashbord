@@ -8,7 +8,7 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  type?: 'danger' | 'warning' | 'info';
+  type?: 'danger' | 'warning' | 'info' | 'success';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -33,6 +33,8 @@ export default function ConfirmDialog({
         return 'bg-yellow-600 hover:bg-yellow-700 text-white';
       case 'info':
         return 'bg-blue-600 hover:bg-blue-700 text-white';
+      case 'success':
+        return 'bg-green-600 hover:bg-green-700 text-white';
       default:
         return 'bg-red-600 hover:bg-red-700 text-white';
     }
@@ -46,27 +48,36 @@ export default function ConfirmDialog({
         return 'text-yellow-600';
       case 'info':
         return 'text-blue-600';
+      case 'success':
+        return 'text-green-600';
       default:
         return 'text-red-600';
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full font-sans">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
+      <div className="rounded-lg shadow-xl max-w-md w-full font-sans" style={{ background: 'var(--card-bg)' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex items-center gap-3">
             <div className={`flex-shrink-0 ${getIconColor()}`}>
               <FiAlertTriangle className="text-xl" />
             </div>
-            <h3 className="text-lg font-semibold text-black">
+            <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
               {title}
             </h3>
           </div>
           <button
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="transition-colors"
+            style={{ color: 'var(--foreground)', opacity: 0.5 }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '0.5';
+            }}
           >
             <FiX className="text-xl" />
           </button>
@@ -74,16 +85,27 @@ export default function ConfirmDialog({
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-gray-600 text-sm leading-relaxed">
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--foreground)', opacity: 0.8 }}>
             {message}
           </p>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+        <div className="flex justify-end gap-3 p-6" style={{ borderTop: '1px solid var(--border)' }}>
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+            className="px-4 py-2 rounded-lg transition-colors font-medium"
+            style={{
+              border: '1px solid var(--border)',
+              color: 'var(--foreground)',
+              background: 'var(--background)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--hover-bg)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--background)';
+            }}
           >
             {cancelText}
           </button>
@@ -106,7 +128,7 @@ export function useConfirm() {
     message: string;
     confirmText?: string;
     cancelText?: string;
-    type?: 'danger' | 'warning' | 'info';
+    type?: 'danger' | 'warning' | 'info' | 'success';
   }): Promise<boolean> => {
     return new Promise((resolve) => {
       // This would need to be implemented with a context provider

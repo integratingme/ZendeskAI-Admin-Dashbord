@@ -77,7 +77,7 @@ export default function Providers() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-black">LLM Providers</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>LLM Providers</h1>
           <button 
             onClick={fetchProviders}
             className="admin-button-outline px-4 py-2 rounded-lg"
@@ -101,7 +101,7 @@ export default function Providers() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-black">LLM Providers</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>LLM Providers</h1>
         <button 
           onClick={fetchProviders}
           className="admin-button-outline px-4 py-2 rounded-lg"
@@ -114,7 +114,7 @@ export default function Providers() {
         {Object.entries(providers).map(([key, provider]) => (
           <div key={key} className="admin-card p-6">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-black">{provider.name}</h3>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>{provider.name}</h3>
             </div>
             
             <div className="space-y-3">

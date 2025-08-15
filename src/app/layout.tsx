@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Maven_Pro } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { UserAuthProvider } from "@/contexts/UserAuthContext";
+import { ToastProvider } from "@/contexts/ToastContext";
 
 const mavenPro = Maven_Pro({
   variable: "--font-maven-pro",
@@ -10,7 +13,7 @@ const mavenPro = Maven_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard - Zendesk AI Assistant",
+  title: "Admin Dashboard - Indesk AI Assistant",
   description: "Admin interface for managing AI assistant subscriptions",
 };
 
@@ -27,9 +30,16 @@ export default function RootLayout({
           background: 'var(--background)', 
           color: 'var(--foreground)' 
         }}
+        suppressHydrationWarning={true}
       >
         <ThemeProvider>
-          {children}
+          <ToastProvider>
+            <AuthProvider>
+              <UserAuthProvider>
+                {children}
+              </UserAuthProvider>
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

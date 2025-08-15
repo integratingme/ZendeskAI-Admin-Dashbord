@@ -41,7 +41,8 @@ body {
 }
 
 /* Admin Dashboard Styles */
-.admin-container {
+.admin-container,
+.user-container {
   min-height: 100vh;
   background: var(--background);
   transition: background-color 0.3s ease;
@@ -51,6 +52,19 @@ body {
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* User Dashboard Styles */
+.user-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.user-content {
+  background: var(--background);
+  transition: background-color 0.3s ease;
 }
 
 .admin-content {
@@ -223,6 +237,28 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent) !important;
+}
+
+/* Custom themed scrollbar */
+.themed-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+.themed-scroll::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 8px;
+}
+.themed-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+  border: 2px solid var(--muted);
+}
+.themed-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+/* Firefox */
+.themed-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--muted);
 }
 
 /* Universal smooth transitions for all elements */

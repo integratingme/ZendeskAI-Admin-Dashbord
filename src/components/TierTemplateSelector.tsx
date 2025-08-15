@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/lib/api';
 import { useToastContext } from '@/contexts/ToastContext';
+import ThemedSelect from '@/components/ThemedSelect';
 
 interface TierTemplate {
   display_name: string;
@@ -96,23 +97,13 @@ export default function TierTemplateSelector({ selectedTemplate, onTemplateSelec
     <div className="p-4 rounded-lg" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
       <h3 className="font-medium mb-4" style={{ color: 'var(--foreground)' }}>Tier Template (Optional)</h3>
       <div className="space-y-4">
-        <select
+        <ThemedSelect
           value={selectedTemplate}
-          onChange={(e) => handleTemplateChange(e.target.value)}
-          className="w-full rounded-lg px-3 py-2 transition-colors"
-          style={{
-            background: 'var(--background)',
-            border: '1px solid var(--border)',
-            color: 'var(--foreground)'
-          }}
-        >
-          <option value="">Custom Configuration</option>
-          {Object.entries(templates).map(([key, template]) => (
-            <option key={key} value={key}>
-              {template.display_name}
-            </option>
-          ))}
-        </select>
+          onChange={(name) => handleTemplateChange(name)}
+          options={[{ value: '', label: 'Custom Configuration' }, ...Object.entries(templates).map(([key, template]) => ({ value: key, label: template.display_name }))]}
+          className="w-full"
+          placeholder="Custom Configuration"
+        />
         
         {selectedTemplate && templates[selectedTemplate] && (
           <div className="rounded-lg p-4 border" style={{ 

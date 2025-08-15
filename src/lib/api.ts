@@ -1,6 +1,14 @@
 // API configuration and service functions
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
+// API Error class
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
 // Response type interfaces
 interface AdminToken {
   token_id: string;
@@ -58,12 +66,7 @@ interface TestingResponse {
   message: string;
 }
 
-class ApiError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
+
 
 class ApiService {
   private baseURL: string;
@@ -398,4 +401,3 @@ class ApiService {
 
 // Create singleton instance
 export const apiService = new ApiService(API_BASE_URL);
-export { ApiError };

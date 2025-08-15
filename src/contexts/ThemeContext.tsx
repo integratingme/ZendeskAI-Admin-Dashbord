@@ -16,7 +16,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Load theme from localStorage on mount
-    const savedTheme = localStorage.getItem('admin-theme') as Theme;
+    // Use a generic theme key that works for both admin and user
+    const savedTheme = localStorage.getItem('app-theme') as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
     }
@@ -25,7 +26,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Apply theme to document
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('admin-theme', theme);
+    localStorage.setItem('app-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/lib/api';
+import ThemedSelect from '@/components/ThemedSelect';
 import { useToastContext } from '@/contexts/ToastContext';
 import { FiToggleLeft, FiToggleRight, FiSettings } from 'react-icons/fi';
 
@@ -275,16 +276,13 @@ export default function FeatureConfigurationForm({
                               <div className="border border-gray-200 rounded p-3">
                                 <h6 className="font-medium text-gray-800 mb-2">Main LLM</h6>
                                 <div className="space-y-2">
-                                  <select
+                                  <ThemedSelect
                                     value={featureConfig.custom_main_llm_config?.provider || ''}
-                                    onChange={(e) => handleProviderChange(feature.name, 'main', e.target.value)}
-                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                  >
-                                    <option value="">Select Provider</option>
-                                    {Object.entries(providers).map(([key, provider]) => (
-                                      <option key={key} value={key}>{provider.name}</option>
-                                    ))}
-                                  </select>
+                                    onChange={(provider) => handleProviderChange(feature.name, 'main', provider)}
+                                    options={Object.entries(providers).map(([key, prov]) => ({ value: key, label: prov.name }))}
+                                    placeholder="Select Provider"
+                                    className="w-full"
+                                  />
                                   
                                   <input
                                     type="text"
@@ -351,16 +349,13 @@ export default function FeatureConfigurationForm({
                               <div className="border border-gray-200 rounded p-3">
                                 <h6 className="font-medium text-gray-800 mb-2">Fallback LLM</h6>
                                 <div className="space-y-2">
-                                  <select
+                                  <ThemedSelect
                                     value={featureConfig.custom_fallback_llm_config?.provider || ''}
-                                    onChange={(e) => handleProviderChange(feature.name, 'fallback', e.target.value)}
-                                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                  >
-                                    <option value="">Select Provider</option>
-                                    {Object.entries(providers).map(([key, provider]) => (
-                                      <option key={key} value={key}>{provider.name}</option>
-                                    ))}
-                                  </select>
+                                    onChange={(provider) => handleProviderChange(feature.name, 'fallback', provider)}
+                                    options={Object.entries(providers).map(([key, prov]) => ({ value: key, label: prov.name }))}
+                                    placeholder="Select Provider"
+                                    className="w-full"
+                                  />
                                   
                                   <input
                                     type="text"

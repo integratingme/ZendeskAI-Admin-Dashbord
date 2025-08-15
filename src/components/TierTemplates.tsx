@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiService } from '@/lib/api';
 import { useToastContext } from '@/contexts/ToastContext';
-import { FiRefreshCw, FiEye } from 'react-icons/fi';
+import { FiRefreshCw, FiEye, FiX } from 'react-icons/fi';
 
 interface TierTemplate {
   display_name: string;
@@ -163,25 +163,30 @@ export default function TierTemplates() {
 
       {/* Template Details Modal */}
       {selectedTemplate && templates[selectedTemplate] && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--card-bg)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }} onClick={() => setSelectedTemplate('')}>
+          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
                 {templates[selectedTemplate].display_name} Template
               </h2>
               <button 
                 onClick={() => setSelectedTemplate('')}
-                className="text-gray-400 hover:text-gray-600"
+                className="transition-colors"
+                style={{ color: 'var(--foreground)', opacity: 0.5 }}
+                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.8'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; }}
+                aria-label="Close"
               >
-                <FiEye className="text-xl" />
+                <FiX className="text-xl" />
               </button>
             </div>
             
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="admin-card p-4">
-                <h3 className="font-medium text-gray-900 mb-3">Template Information</h3>
+                <h3 className="font-medium mb-3" style={{ color: 'var(--foreground)' }}>Template Information</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
+                  {/* Use themed-scroll for inner long content if needed */}
                   <div>
                     <span className="text-gray-600">Template Key:</span>
                     <p className="font-mono text-xs">{selectedTemplate}</p>
@@ -208,10 +213,10 @@ export default function TierTemplates() {
 
               {/* LLM Configuration */}
               <div className="admin-card p-4">
-                <h3 className="font-medium text-gray-900 mb-3">LLM Configuration</h3>
+                <h3 className="font-medium mb-3" style={{ color: 'var(--foreground)' }}>LLM Configuration</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Main LLM</h4>
+                    <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>Main LLM</h4>
                     <div className="text-sm space-y-1">
                       <p><span className="text-gray-600">Provider:</span> {templates[selectedTemplate].suggested_main_llm.provider}</p>
                       <p><span className="text-gray-600">Model:</span> {templates[selectedTemplate].suggested_main_llm.model}</p>
@@ -220,7 +225,7 @@ export default function TierTemplates() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Fallback LLM</h4>
+                    <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>Fallback LLM</h4>
                     <div className="text-sm space-y-1">
                       <p><span className="text-gray-600">Provider:</span> {templates[selectedTemplate].suggested_fallback_llm.provider}</p>
                       <p><span className="text-gray-600">Model:</span> {templates[selectedTemplate].suggested_fallback_llm.model}</p>
@@ -233,7 +238,7 @@ export default function TierTemplates() {
 
               {/* Features */}
               <div className="admin-card p-4">
-                <h3 className="font-medium text-gray-900 mb-3">
+                <h3 className="font-medium mb-3" style={{ color: 'var(--foreground)' }} >
                   Features ({getEnabledFeaturesCount(templates[selectedTemplate].features)} enabled)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -265,14 +270,6 @@ export default function TierTemplates() {
               </div>
             </div>
 
-            <div className="flex justify-end mt-6">
-              <button 
-                onClick={() => setSelectedTemplate('')}
-                className="admin-button-outline px-4 py-2 rounded-lg"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}

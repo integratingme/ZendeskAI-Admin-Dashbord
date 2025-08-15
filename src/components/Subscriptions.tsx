@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import ThemedSelect from '@/components/ThemedSelect';
 import { apiService, ApiError } from '@/lib/api';
 import { useToastContext } from '@/contexts/ToastContext';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -46,6 +47,7 @@ interface Subscription {
 }
 
 export default function Subscriptions() {
+  const toast = useToastContext();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export default function Subscriptions() {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [viewModalVisible, setViewModalVisible] = useState(false);
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
@@ -70,7 +73,6 @@ export default function Subscriptions() {
   }>({ isOpen: false, subscriptionKey: '', customerEmail: '' });
   const [reactivating, setReactivating] = useState<string | null>(null);
   
-  const toast = useToastContext();
   
   // Form state
   const [formData, setFormData] = useState({
@@ -781,6 +783,7 @@ export default function Subscriptions() {
                         onClick={() => {
                           setSelectedSubscription(subscription);
                           setShowViewModal(true);
+                          requestAnimationFrame(() => setViewModalVisible(true));
                         }}
                         className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
                       >
@@ -874,7 +877,7 @@ export default function Subscriptions() {
       {/* Create Subscription Modal */}
       {showCreateForm && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--card-bg)' }}>
+          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll" style={{ background: 'var(--card-bg)' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Create New Subscription</h2>
               <button 
@@ -957,17 +960,14 @@ export default function Subscriptions() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Provider *
                     </label>
-                    <select
+                    <ThemedSelect
                       value={formData.main_llm.provider}
-                      onChange={(e) => handleProviderChange('main_llm', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      required
-                    >
-                      <option value="">Select Provider</option>
-                      {Object.entries(providers).map(([key, provider]) => (
-                        <option key={key} value={key}>{provider.name as string}</option>
-                      ))}
-                    </select>
+                      onChange={(provider) => handleProviderChange('main_llm', provider)}
+                      options={Object.entries(providers).map(([key, provider]) => ({ value: key, label: provider.name as string }))}
+                      placeholder="Select Provider"
+                      className="w-full"
+                      ariaLabel="Main LLM Provider"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1059,22 +1059,19 @@ export default function Subscriptions() {
               <div className="admin-card p-4">
                 <h3 className="font-medium text-gray-900 mb-4">Fallback LLM Configuration</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Provider *
-                    </label>
-                    <select
-                      value={formData.fallback_llm.provider}
-                      onChange={(e) => handleProviderChange('fallback_llm', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      required
-                    >
-                      <option value="">Select Provider</option>
-                      {Object.entries(providers).map(([key, provider]) => (
-                        <option key={key} value={key}>{provider.name as string}</option>
-                      ))}
-                    </select>
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Provider *
+                      </label>
+                      <ThemedSelect
+                        value={formData.fallback_llm.provider}
+                        onChange={(provider) => handleProviderChange('fallback_llm', provider)}
+                        options={Object.entries(providers).map(([key, provider]) => ({ value: key, label: provider.name as string }))}
+                        placeholder="Select Provider"
+                        className="w-full"
+                        ariaLabel="Fallback LLM Provider"
+                      />
+                    </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Model *
@@ -1198,16 +1195,21 @@ export default function Subscriptions() {
 
       {/* View Subscription Modal */}
       {showViewModal && selectedSubscription && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--card-bg)' }}>
+        <div className={`fixed inset-0 z-[60] p-4 flex items-center justify-center transition-opacity duration-200 ${viewModalVisible ? 'opacity-100' : 'opacity-0'}`} style={{ background: 'var(--modal-overlay)' }}>
+          <div className={`rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll transform transition-transform duration-200 will-change-auto ${viewModalVisible ? 'scale-100' : 'scale-95'}`} style={{ background: 'var(--card-bg)' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Subscription Details</h2>
               <button 
                 onClick={() => {
-                  setShowViewModal(false);
-                  setSelectedSubscription(null);
+                  setViewModalVisible(false);
+                  setTimeout(() => {
+                    setShowViewModal(false);
+                    setSelectedSubscription(null);
+                  }, 180);
                 }}
                 className="text-gray-400 hover:text-gray-600"
+                aria-label="Close"
+                title="Close"
               >
                 <FiX className="text-xl" />
               </button>
@@ -1217,9 +1219,17 @@ export default function Subscriptions() {
               <div className="admin-card p-4">
                 <h3 className="font-medium text-gray-900 mb-3">Customer Information</h3>
                 <div className="space-y-2 text-sm">
-                  <div><span className="font-medium">Email:</span> {selectedSubscription.customer_email}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Email:</span>
+                    <span>{selectedSubscription.customer_email}</span>
+                    
+                  </div>
                   <div><span className="font-medium">Subdomain:</span> {selectedSubscription.zendesk_subdomain}</div>
-                  <div><span className="font-medium">Subscription Key:</span> <code className="text-xs bg-gray-100 px-1 rounded">{selectedSubscription.subscription_key}</code></div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Subscription Key:</span>
+                    <code className="text-xs bg-gray-100 px-1 rounded">{selectedSubscription.subscription_key}</code>
+                    
+                  </div>
                 </div>
               </div>
               
@@ -1274,17 +1284,6 @@ export default function Subscriptions() {
               </div>
             </div>
             
-            <div className="flex justify-end mt-6">
-              <button 
-                onClick={() => {
-                  setShowViewModal(false);
-                  setSelectedSubscription(null);
-                }}
-                className="admin-button-outline px-6 py-2 rounded-lg flex items-center gap-2"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -1292,7 +1291,7 @@ export default function Subscriptions() {
       {/* Edit Subscription Modal */}
       {showEditModal && selectedSubscription && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--card-bg)' }}>
+          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll" style={{ background: 'var(--card-bg)' }}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Edit Subscription</h2>
               <button 
@@ -1367,20 +1366,16 @@ export default function Subscriptions() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Provider *
                     </label>
-                    <select
+                    <ThemedSelect
                       value={editFormData.main_llm.provider}
-                      onChange={(e) => {
-                        const provider = e.target.value;
+                      onChange={(provider) => {
                         if (provider && providers[provider]) {
                           const providerData = providers[provider] as Record<string, unknown>;
-                          const endpoint = providerData.endpoint as string || '';
-                          const models = providerData.example_models as string[] || [];
-                          const pricing = providerData.default_pricing as Record<string, {input: number; output: number}> || {};
-                          
-                          // Get first model's pricing or default to 0
+                          const endpoint = (providerData.endpoint as string) || '';
+                          const models = (providerData.example_models as string[]) || [];
+                          const pricing = (providerData.default_pricing as Record<string, { input: number; output: number }>) || {};
                           const firstModel = models[0] || '';
                           const firstPricing = firstModel && pricing[firstModel] ? pricing[firstModel] : { input: 0, output: 0 };
-                          
                           setEditFormData(prev => ({
                             ...prev,
                             main_llm: {
@@ -1390,26 +1385,21 @@ export default function Subscriptions() {
                               model: firstModel,
                               api_key: '',
                               input_price_per_million: firstPricing.input || 0,
-                              output_price_per_million: firstPricing.output || 0
-                            }
+                              output_price_per_million: firstPricing.output || 0,
+                            },
                           }));
-                          
-                          console.log('Updated edit form data for main_llm with endpoint:', endpoint);
                         } else {
-                          setEditFormData(prev => ({ 
-                            ...prev, 
-                            main_llm: { ...prev.main_llm, provider }
+                          setEditFormData(prev => ({
+                            ...prev,
+                            main_llm: { ...prev.main_llm, provider },
                           }));
                         }
                       }}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      required
-                    >
-                      <option value="">Select Provider</option>
-                      {Object.entries(providers).map(([key, provider]) => (
-                        <option key={key} value={key}>{provider.name as string}</option>
-                      ))}
-                    </select>
+                      options={Object.entries(providers).map(([key, prov]) => ({ value: key, label: prov.name as string }))}
+                      placeholder="Select Provider"
+                      className="w-full"
+                      ariaLabel="Main LLM Provider"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1505,20 +1495,16 @@ export default function Subscriptions() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Provider *
                     </label>
-                    <select
+                    <ThemedSelect
                       value={editFormData.fallback_llm.provider}
-                      onChange={(e) => {
-                        const provider = e.target.value;
+                      onChange={(provider) => {
                         if (provider && providers[provider]) {
                           const providerData = providers[provider] as Record<string, unknown>;
-                          const endpoint = providerData.endpoint as string || '';
-                          const models = providerData.example_models as string[] || [];
-                          const pricing = providerData.default_pricing as Record<string, {input: number; output: number}> || {};
-                          
-                          // Get first model's pricing or default to 0
+                          const endpoint = (providerData.endpoint as string) || '';
+                          const models = (providerData.example_models as string[]) || [];
+                          const pricing = (providerData.default_pricing as Record<string, { input: number; output: number }>) || {};
                           const firstModel = models[0] || '';
                           const firstPricing = firstModel && pricing[firstModel] ? pricing[firstModel] : { input: 0, output: 0 };
-                          
                           setEditFormData(prev => ({
                             ...prev,
                             fallback_llm: {
@@ -1528,26 +1514,21 @@ export default function Subscriptions() {
                               model: firstModel,
                               api_key: '',
                               input_price_per_million: firstPricing.input || 0,
-                              output_price_per_million: firstPricing.output || 0
-                            }
+                              output_price_per_million: firstPricing.output || 0,
+                            },
                           }));
-                          
-                          console.log('Updated edit form data for fallback_llm with endpoint:', endpoint);
                         } else {
-                          setEditFormData(prev => ({ 
-                            ...prev, 
-                            fallback_llm: { ...prev.fallback_llm, provider }
+                          setEditFormData(prev => ({
+                            ...prev,
+                            fallback_llm: { ...prev.fallback_llm, provider },
                           }));
                         }
                       }}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      required
-                    >
-                      <option value="">Select Provider</option>
-                      {Object.entries(providers).map(([key, provider]) => (
-                        <option key={key} value={key}>{provider.name as string}</option>
-                      ))}
-                    </select>
+                      options={Object.entries(providers).map(([key, prov]) => ({ value: key, label: prov.name as string }))}
+                      placeholder="Select Provider"
+                      className="w-full"
+                      ariaLabel="Fallback LLM Provider"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

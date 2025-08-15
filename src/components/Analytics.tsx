@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import ThemedSelect from '@/components/ThemedSelect';
 import { apiService, ApiError } from '@/lib/api';
 
 interface SubscriptionUsage {
@@ -203,18 +204,13 @@ export default function Analytics() {
         <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Subscription Analytics</h3>
         <div className="flex gap-4 items-center">
           <label className="text-sm font-medium text-gray-700">Select Subscription:</label>
-          <select 
+          <ThemedSelect
             value={selectedSubscription}
-            onChange={(e) => setSelectedSubscription(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 min-w-64"
-          >
-            <option value="">Choose a subscription...</option>
-            {subscriptions.map((sub) => (
-              <option key={sub.subscription_key} value={sub.subscription_key}>
-                {sub.customer_email} ({sub.zendesk_subdomain})
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedSubscription(val)}
+            options={subscriptions.map((sub) => ({ value: sub.subscription_key, label: `${sub.customer_email} (${sub.zendesk_subdomain})` }))}
+            placeholder="Choose a subscription..."
+            className="min-w-64"
+          />
         </div>
       </div>
 

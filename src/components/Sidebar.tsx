@@ -83,7 +83,7 @@ export default function Sidebar({ activeSection, onSectionChange, isOpen = true,
       `}>
       <div className="mb-8">
         <h1 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>Admin Dashboard</h1>
-        <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Zendesk AI Assistant</p>
+        <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Indesk AI Assistant</p>
       </div>
       
       <nav className="space-y-2">

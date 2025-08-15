@@ -8,6 +8,7 @@ import {
   FiX, 
   FiRefreshCw
 } from 'react-icons/fi';
+import ThemedSelect from '@/components/ThemedSelect';
 
 interface LLMConfig {
   provider: string;
@@ -343,23 +344,13 @@ export default function FeatureManagement() {
         <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
           Select Subscription
         </label>
-        <select
+        <ThemedSelect
           value={selectedSubscription}
-          onChange={(e) => setSelectedSubscription(e.target.value)}
-          className="w-full p-3 rounded-lg border transition-colors"
-          style={{
-            background: 'var(--background)',
-            border: '1px solid var(--border)',
-            color: 'var(--foreground)'
-          }}
-        >
-          <option value="">Select a subscription...</option>
-          {Object.entries(subscriptions).map(([key, subscription]) => (
-            <option key={key} value={key}>
-              {subscription.customer_email} ({key})
-            </option>
-          ))}
-        </select>
+          onChange={(val) => setSelectedSubscription(val)}
+          options={[{ value: '', label: 'Select a subscription...' }, ...Object.entries(subscriptions).map(([key, subscription]) => ({ value: key, label: `${subscription.customer_email} (${key})` }))]}
+          className="w-full"
+          placeholder="Select a subscription..."
+        />
         {Object.keys(subscriptions).length === 0 && (
           <p className="text-sm mt-2" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
             No subscriptions found. Please create a subscription first.
@@ -503,7 +494,7 @@ export default function FeatureManagement() {
       {/* Feature LLM Configuration Modal */}
       {showFeatureConfigModal && selectedFeature && (
         <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--card-bg)' }}>
+          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll" style={{ background: 'var(--card-bg)' }}>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
@@ -585,22 +576,17 @@ export default function FeatureManagement() {
                               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                                 Provider
                               </label>
-                              <select
+                              <ThemedSelect
                                 value={subscriptionFeatures[selectedFeature].custom_main_llm_config?.provider || ''}
-                                onChange={(e) => {
-                                  const provider = e.target.value;
+                                onChange={(provider) => {
                                   const currentConfig = subscriptionFeatures[selectedFeature];
-                                  
                                   if (provider && providers[provider]) {
                                     const providerData = providers[provider];
                                     const endpoint = providerData.endpoint || '';
                                     const models = providerData.example_models || [];
                                     const pricing = providerData.default_pricing || {};
-                                    
-                                    // Get first model's pricing or default to 0
                                     const firstModel = models[0] || '';
                                     const firstPricing = firstModel && pricing[firstModel] ? pricing[firstModel] : { input: 0, output: 0 };
-                                    
                                     const updatedConfig: FeatureConfig = {
                                       ...currentConfig,
                                       custom_main_llm_config: createLLMConfig({
@@ -610,12 +596,12 @@ export default function FeatureManagement() {
                                         model: firstModel,
                                         api_key: '',
                                         input_price_per_million: firstPricing.input || 0,
-                                        output_price_per_million: firstPricing.output || 0
-                                      })
+                                        output_price_per_million: firstPricing.output || 0,
+                                      }),
                                     };
                                     setSubscriptionFeatures(prev => ({
                                       ...prev,
-                                      [selectedFeature]: updatedConfig
+                                      [selectedFeature]: updatedConfig,
                                     }));
                                   } else {
                                     const updatedConfig: FeatureConfig = {
@@ -626,27 +612,20 @@ export default function FeatureManagement() {
                                         endpoint: '',
                                         api_key: '',
                                         input_price_per_million: 0,
-                                        output_price_per_million: 0
-                                      })
+                                        output_price_per_million: 0,
+                                      }),
                                     };
                                     setSubscriptionFeatures(prev => ({
                                       ...prev,
-                                      [selectedFeature]: updatedConfig
+                                      [selectedFeature]: updatedConfig,
                                     }));
                                   }
                                 }}
-                                className="w-full p-3 rounded-lg border transition-colors"
-                                style={{
-                                  background: 'var(--card-bg)',
-                                  border: '1px solid var(--border)',
-                                  color: 'var(--foreground)'
-                                }}
-                              >
-                                <option value="">Select Provider</option>
-                                {Object.entries(providers).map(([key, provider]) => (
-                                  <option key={key} value={key}>{provider.name}</option>
-                                ))}
-                              </select>
+                                options={Object.entries(providers).map(([key, prov]) => ({ value: key, label: prov.name }))}
+                                placeholder="Select Provider"
+                                className="w-full"
+                                ariaLabel="Main LLM Provider"
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
@@ -811,22 +790,17 @@ export default function FeatureManagement() {
                               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                                 Provider
                               </label>
-                              <select
+                              <ThemedSelect
                                 value={subscriptionFeatures[selectedFeature].custom_fallback_llm_config?.provider || ''}
-                                onChange={(e) => {
-                                  const provider = e.target.value;
+                                onChange={(provider) => {
                                   const currentConfig = subscriptionFeatures[selectedFeature];
-                                  
                                   if (provider && providers[provider]) {
                                     const providerData = providers[provider];
                                     const endpoint = providerData.endpoint || '';
                                     const models = providerData.example_models || [];
                                     const pricing = providerData.default_pricing || {};
-                                    
-                                    // Get first model's pricing or default to 0
                                     const firstModel = models[0] || '';
                                     const firstPricing = firstModel && pricing[firstModel] ? pricing[firstModel] : { input: 0, output: 0 };
-                                    
                                     const updatedConfig: FeatureConfig = {
                                       ...currentConfig,
                                       custom_fallback_llm_config: createLLMConfig({
@@ -836,12 +810,12 @@ export default function FeatureManagement() {
                                         model: firstModel,
                                         api_key: '',
                                         input_price_per_million: firstPricing.input || 0,
-                                        output_price_per_million: firstPricing.output || 0
-                                      })
+                                        output_price_per_million: firstPricing.output || 0,
+                                      }),
                                     };
                                     setSubscriptionFeatures(prev => ({
                                       ...prev,
-                                      [selectedFeature]: updatedConfig
+                                      [selectedFeature]: updatedConfig,
                                     }));
                                   } else {
                                     const updatedConfig: FeatureConfig = {
@@ -852,27 +826,20 @@ export default function FeatureManagement() {
                                         endpoint: '',
                                         api_key: '',
                                         input_price_per_million: 0,
-                                        output_price_per_million: 0
-                                      })
+                                        output_price_per_million: 0,
+                                      }),
                                     };
                                     setSubscriptionFeatures(prev => ({
                                       ...prev,
-                                      [selectedFeature]: updatedConfig
+                                      [selectedFeature]: updatedConfig,
                                     }));
                                   }
                                 }}
-                                className="w-full p-3 rounded-lg border transition-colors"
-                                style={{
-                                  background: 'var(--card-bg)',
-                                  border: '1px solid var(--border)',
-                                  color: 'var(--foreground)'
-                                }}
-                              >
-                                <option value="">Select Provider</option>
-                                {Object.entries(providers).map(([key, provider]) => (
-                                  <option key={key} value={key}>{provider.name}</option>
-                                ))}
-                              </select>
+                                options={Object.entries(providers).map(([key, prov]) => ({ value: key, label: prov.name }))}
+                                placeholder="Select Provider"
+                                className="w-full"
+                                ariaLabel="Fallback LLM Provider"
+                              />
                             </div>
                             <div>
                               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>

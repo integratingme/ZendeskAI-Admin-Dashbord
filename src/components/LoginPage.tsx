@@ -1,13 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { FiArrowLeft, FiShield } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLoginFlow } from '@/contexts/LoginFlowContext';
+
 
 export default function LoginPage() {
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const { setLoginType } = useLoginFlow();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +38,33 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--background)' }}>
+    <div className="relative min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--background)' }}>
       <div className="max-w-md w-full space-y-8">
+        {/* Back Button */}
+        <button
+          onClick={() => setLoginType('selector')}
+          className="absolute top-4 left-4 flex items-center space-x-2 text-sm transition-colors"
+          style={{ color: 'var(--foreground)', opacity: 0.7, zIndex: 10 }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = '1';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = '0.7';
+          }}
+        >
+          <FiArrowLeft />
+          <span>Back to login selection</span>
+        </button>
+
         <div className="text-center">
+          <div 
+            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+            style={{ background: 'var(--accent)' }}
+          >
+            <FiShield className="text-2xl text-white" />
+          </div>
           <h1 className="text-3xl font-bold" style={{ color: 'var(--foreground)' }}>Admin Dashboard</h1>
-          <p className="mt-2" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Zendesk AI Assistant</p>
+          <p className="mt-2" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Indesk AI Assistant</p>
           <p className="mt-4 text-sm" style={{ color: 'var(--foreground)', opacity: 0.6 }}>
             Enter your admin token to access the dashboard
           </p>
@@ -80,8 +106,6 @@ export default function LoginPage() {
             <h3 className="text-sm font-medium text-gray-700 mb-3">Need an admin token?</h3>
             <div className="text-xs text-gray-500 space-y-2">
               <p>• Contact your system administrator</p>
-              <p>• Use the initial token from environment variables</p>
-              <p>• Generate a new token if you have existing access</p>
             </div>
           </div>
         </div>

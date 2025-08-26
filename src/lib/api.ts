@@ -44,7 +44,12 @@ interface RevokeTokenResponse {
 
 interface SubscriptionResponse {
   success: boolean;
-  data?: Record<string, unknown>;
+  subscriptions?: Record<string, unknown>;
+  count?: number;
+  data?: {
+    subscriptions?: Record<string, unknown>;
+    count?: number;
+  };
   message: string;
 }
 
@@ -68,7 +73,7 @@ interface TestingResponse {
 
 
 
-class ApiService {
+export class ApiService {
   private baseURL: string;
   private adminToken: string | null = null;
 
@@ -212,8 +217,13 @@ class ApiService {
     });
   }
 
-  async listSubscriptions(includeExpired: boolean = false): Promise<SubscriptionResponse> {
-    return this.request<SubscriptionResponse>(`/api/admin/subscriptions/list?include_expired=${includeExpired}`);
+  async listSubscriptions(includeExpired: boolean = false): Promise<{ subscriptions: Record<string, unknown>; count: number; raw: SubscriptionResponse }> {
+    const resp = await this.request<SubscriptionResponse>(`/api/admin/subscriptions/list?include_expired=${includeExpired}`);
+    // Normalize shape: prefer top-level subscriptions/count, fallback to data.*
+    const subs = (resp.subscriptions as Record<string, unknown>) || (resp.data?.subscriptions as Record<string, unknown>) || {};
+    const count = (typeof resp.count === 'number' ? resp.count : (typeof resp.data?.count === 'number' ? resp.data.count : Object.keys(subs).length));
+    return { subscriptions: subs, count, raw: resp };
+
   }
 
   async getSubscriptionDetails(subscriptionKey: string): Promise<SubscriptionResponse> {
@@ -275,6 +285,15 @@ class ApiService {
   }
 
   // Analytics
+  async getUsageDaily(subscriptionKey: string, params?: { startDate?: string; endDate?: string; scope?: string }): Promise<{ success: boolean; subscription_key: string; rows: Array<{ date: string; scope: string; total_requests: number; total_input_tokens: number; total_output_tokens: number; estimated_cost_usd: number; used_count?: number }>; message: string; }> {
+    const query = new URLSearchParams();
+    if (params?.startDate) query.append('start_date', params.startDate);
+    if (params?.endDate) query.append('end_date', params.endDate);
+    if (params?.scope) query.append('scope', params.scope);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    return this.request(`/api/admin/analytics/usage/daily/${subscriptionKey}${qs}`);
+  }
+
   async getAnalyticsOverview(): Promise<AnalyticsResponse> {
     return this.request<AnalyticsResponse>('/api/admin/analytics/overview');
   }
@@ -368,6 +387,30 @@ class ApiService {
     }>
   }> {
     return this.request('/api/admin/features/available');
+  }
+
+  // Admin Prompts
+  async getSubscriptionPrompts(subscriptionKey: string): Promise<{ prompts: Record<string, string> }> {
+    return this.request(`/api/admin/prompts/${subscriptionKey}`);
+  }
+
+  async updateSubscriptionPrompts(subscriptionKey: string, yamlContent: string): Promise<{ success: boolean; message?: string }> {
+    return this.request(`/api/admin/prompts/${subscriptionKey}/update`, {
+      method: 'POST',
+      body: JSON.stringify({ yaml_content: yamlContent })
+    });
+  }
+
+  async resetSubscriptionPrompts(subscriptionKey: string): Promise<{ success: boolean; message?: string }> {
+    return this.request(`/api/admin/prompts/${subscriptionKey}/reset`, { method: 'POST' });
+  }
+
+  async reloadSubscriptionPrompts(subscriptionKey: string): Promise<{ success: boolean; message?: string }> {
+    return this.request(`/api/admin/prompts/${subscriptionKey}/reload`, { method: 'POST' });
+  }
+
+  async downloadSubscriptionPrompts(subscriptionKey: string): Promise<{ yaml: string }> {
+    return this.request(`/api/admin/prompts/${subscriptionKey}/download`);
   }
 
   async getSubscriptionFeatures(subscriptionKey: string): Promise<{ success: boolean; data?: Record<string, unknown> }> {

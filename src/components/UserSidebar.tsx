@@ -2,9 +2,11 @@
 
 import { FiX, FiHome, FiSettings, FiUser, FiSun, FiMoon } from 'react-icons/fi';
 import { FiPlay } from 'react-icons/fi';
+import { TbPrompt } from 'react-icons/tb';
+import { GrSync } from 'react-icons/gr';
 import { useTheme } from '@/contexts/ThemeContext';
 
-type ActiveSection = 'overview' | 'features' | 'testing' | 'settings';
+type ActiveSection = 'overview' | 'features' | 'testing' | 'settings' | 'prompts' | 'macros';
 
 interface UserSidebarProps {
   activeSection: ActiveSection;
@@ -40,6 +42,18 @@ export default function UserSidebar({ activeSection, onSectionChange, isOpen, on
       label: 'Settings',
       icon: FiUser,
       description: 'Account settings'
+    },
+    {
+      id: 'prompts' as ActiveSection,
+      label: 'Prompts',
+      icon: TbPrompt,
+      description: 'Manage prompts'
+    },
+    {
+      id: 'macros' as ActiveSection,
+      label: 'Macros',
+      icon: GrSync,
+      description: 'Sync and manage macros'
     }
   ];
 

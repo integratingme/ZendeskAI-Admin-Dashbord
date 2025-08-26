@@ -17,6 +17,7 @@ import {
   FiLayers
 } from 'react-icons/fi';
 import { CgOptions } from 'react-icons/cg';
+import { TbPrompt } from 'react-icons/tb';
 
 interface SidebarProps {
   activeSection: string;
@@ -34,6 +35,7 @@ const menuItems = [
   { id: 'tokens', label: 'Admin Tokens', icon: FiKey },
   { id: 'features', label: 'Feature Control', icon: CgOptions },
   { id: 'templates', label: 'Tier Templates', icon: FiLayers },
+  { id: 'prompts', label: 'Prompts', icon: TbPrompt },
 ];
 
 export default function Sidebar({ activeSection, onSectionChange, isOpen = true, onToggle }: SidebarProps) {

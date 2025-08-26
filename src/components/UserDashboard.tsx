@@ -8,9 +8,11 @@ import UserOverview from '@/components/UserOverview';
 import UserFeatureManagement from '@/components/UserFeatureManagement';
 import UserTesting from '@/components/UserTesting';
 import UserSettings from '@/components/UserSettings';
+import UserPrompts from '@/components/UserPrompts';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import UserMacros from '@/components/UserMacros';
 
-type ActiveSection = 'overview' | 'features' | 'testing' | 'settings';
+type ActiveSection = 'overview' | 'features' | 'testing' | 'settings' | 'prompts' | 'macros';
 
 export default function UserDashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
@@ -28,6 +30,10 @@ export default function UserDashboard() {
         return <UserTesting />;
       case 'settings':
         return <UserSettings />;
+      case 'prompts':
+        return <UserPrompts />;
+      case 'macros':
+        return <UserMacros />;
       default:
         return <UserOverview />;
     }
@@ -43,6 +49,10 @@ export default function UserDashboard() {
         return 'Testing & Validation';
       case 'settings':
         return 'Account Settings';
+      case 'prompts':
+        return 'Prompts';
+      case 'macros':
+        return 'Macros';
       default:
         return 'Dashboard';
     }

@@ -53,6 +53,8 @@ export default function Subscriptions() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [usageLoading, setUsageLoading] = useState<boolean>(false);
+  const [usageError, setUsageError] = useState<string | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
@@ -162,7 +164,8 @@ export default function Subscriptions() {
       }
       setError(null);
       
-      const response = await apiService.listSubscriptions(showInactiveValue);
+      const { subscriptions: subs } = await apiService.listSubscriptions(showInactiveValue);
+      const response = { success: true, data: subs } as { success: boolean; data: Record<string, unknown> };
       console.log('Subscriptions response:', response);
       console.log('Response structure:', {
         success: response.success,
@@ -191,38 +194,41 @@ export default function Subscriptions() {
       
       if (subscriptionsData && typeof subscriptionsData === 'object') {
         // Convert the subscriptions object to array format
-        const subscriptionsArray = Object.entries(subscriptionsData).map(([key, sub]: [string, Record<string, unknown>]) => ({
-          subscription_key: key,
-          customer_email: sub.customer_email as string,
-          zendesk_subdomain: sub.zendesk_subdomain as string,
-          subscription_days: sub.subscription_days as number,
-          start_date: sub.start_date as string || sub.created_at as string,
-          end_date: sub.end_date as string || sub.expires_at as string,
-          tier_template: sub.tier_template as string,
-          request_limit: sub.request_limit as number || 1000,
-          current_usage: sub.current_usage as number || 0,
-          created_at: sub.created_at as string,
-          expires_at: sub.expires_at as string,
-          is_active: sub.is_active as boolean,
-          main_llm: {
-            provider: (sub.main_llm as Record<string, unknown>)?.provider as string || 'unknown',
-            model: (sub.main_llm as Record<string, unknown>)?.model as string || 'unknown'
-          },
-          fallback_llm: {
-            provider: (sub.fallback_llm as Record<string, unknown>)?.provider as string || 'unknown',
-            model: (sub.fallback_llm as Record<string, unknown>)?.model as string || 'unknown'
-          },
-          usage_stats: (sub.usage_stats as Record<string, unknown>) || {
-            main_llm_usage: {
-              total_requests: 0,
-              estimated_cost_usd: 0.0
+        const subscriptionsArray = Object.entries(subscriptionsData).map(([key, sub]) => {
+          const subscription = sub as Record<string, unknown>;
+          return {
+            subscription_key: key,
+            customer_email: subscription.customer_email as string,
+            zendesk_subdomain: subscription.zendesk_subdomain as string,
+            subscription_days: subscription.subscription_days as number,
+            start_date: subscription.start_date as string || subscription.created_at as string,
+            end_date: subscription.end_date as string || subscription.expires_at as string,
+            tier_template: subscription.tier_template as string,
+            request_limit: subscription.request_limit as number || 1000,
+            current_usage: subscription.current_usage as number || 0,
+            created_at: subscription.created_at as string,
+            expires_at: subscription.expires_at as string,
+            is_active: subscription.is_active as boolean,
+            main_llm: {
+              provider: (subscription.main_llm as Record<string, unknown>)?.provider as string || 'unknown',
+              model: (subscription.main_llm as Record<string, unknown>)?.model as string || 'unknown'
             },
-            fallback_llm_usage: {
-              total_requests: 0,
-              estimated_cost_usd: 0.0
+            fallback_llm: {
+              provider: (subscription.fallback_llm as Record<string, unknown>)?.provider as string || 'unknown',
+              model: (subscription.fallback_llm as Record<string, unknown>)?.model as string || 'unknown'
+            },
+            usage_stats: (subscription.usage_stats as Record<string, unknown>) || {
+              main_llm_usage: {
+                total_requests: 0,
+                estimated_cost_usd: 0.0
+              },
+              fallback_llm_usage: {
+                total_requests: 0,
+                estimated_cost_usd: 0.0
+              }
             }
-          }
-        }));
+          };
+        });
         console.log('Parsed subscriptions:', subscriptionsArray.length, 'subscriptions');
         setSubscriptions(subscriptionsArray);
       } else {
@@ -780,8 +786,20 @@ export default function Subscriptions() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex gap-2">
                       <button 
-                        onClick={() => {
+                        onClick={async () => {
                           setSelectedSubscription(subscription);
+                          setUsageLoading(true);
+                          setUsageError(null);
+                          try {
+                            const usage = await apiService.getSubscriptionUsage(subscription.subscription_key);
+                            const usage_stats = (usage as any).usage_stats || (usage.data as any)?.usage_stats || null;
+                            setSelectedSubscription({ ...subscription, usage_stats: usage_stats || undefined });
+                          } catch (e) {
+                            console.error('Failed to load usage stats', e);
+                            setUsageError('Failed to load usage stats');
+                          } finally {
+                            setUsageLoading(false);
+                          }
                           setShowViewModal(true);
                           requestAnimationFrame(() => setViewModalVisible(true));
                         }}

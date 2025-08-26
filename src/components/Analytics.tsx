@@ -102,36 +102,23 @@ export default function Analytics() {
   const [costsData, setCostsData] = useState<SubscriptionCosts | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Trends state
+  const [trendStart, setTrendStart] = useState<string>(() => new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0]);
+  const [trendEnd, setTrendEnd] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [trendScope, setTrendScope] = useState<string>('main');
+  const [trendRows, setTrendRows] = useState<Array<{date: string; scope: string; total_requests: number; total_input_tokens: number; total_output_tokens: number; estimated_cost_usd: number; used_count?: number}>>([]);
+  const [trendLoading, setTrendLoading] = useState<boolean>(false);
+  const [trendError, setTrendError] = useState<string | null>(null);
 
   const fetchSubscriptions = useCallback(async () => {
     try {
-      const response = await apiService.listSubscriptions();
-      console.log('Analytics subscriptions response:', response);
-      
-      if (response.success && response.data?.subscriptions) {
-        const subscriptionsArray = Object.entries(response.data.subscriptions).map(([key, sub]: [string, SubscriptionData]) => ({
-          subscription_key: key,
-          customer_email: sub.customer_email as string,
-          zendesk_subdomain: sub.zendesk_subdomain as string
-        }));
-        setSubscriptions(subscriptionsArray);
-      } else if (response.data) {
-        // Handle case where subscriptions are directly in data
-        const subscriptionsArray = Object.entries(response.data as Record<string, Record<string, unknown>>).map(([key, sub]) => ({
-          subscription_key: key,
-          customer_email: sub.customer_email as string,
-          zendesk_subdomain: sub.zendesk_subdomain as string
-        }));
-        setSubscriptions(subscriptionsArray);
-      } else if ((response as unknown as Record<string, unknown>).subscriptions) {
-        // Handle case where subscriptions are directly in response
-        const subscriptionsArray = Object.entries((response as unknown as Record<string, unknown>).subscriptions as Record<string, Record<string, unknown>>).map(([key, sub]: [string, Record<string, unknown>]) => ({
-          subscription_key: key,
-          customer_email: sub.customer_email as string,
-          zendesk_subdomain: sub.zendesk_subdomain as string
-        }));
-        setSubscriptions(subscriptionsArray);
-      }
+      const { subscriptions: subs } = await apiService.listSubscriptions();
+      const subscriptionsArray: Subscription[] = Object.entries(subs as Record<string, SubscriptionData>).map(([key, sub]) => ({
+        subscription_key: key,
+        customer_email: sub.customer_email as string,
+        zendesk_subdomain: sub.zendesk_subdomain as string
+      }));
+      setSubscriptions(subscriptionsArray);
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
     }
@@ -192,6 +179,30 @@ export default function Analytics() {
       fetchAnalyticsData();
     }
   }, [selectedSubscription, fetchAnalyticsData]);
+
+  // Fetch trends
+  const fetchTrends = useCallback(async () => {
+    if (!selectedSubscription) return;
+    try {
+      setTrendLoading(true);
+      setTrendError(null);
+      const resp = await apiService.getUsageDaily(selectedSubscription, { startDate: trendStart, endDate: trendEnd, scope: trendScope });
+      if (resp && resp.success) {
+        setTrendRows(resp.rows || []);
+      } else {
+        setTrendRows([]);
+      }
+    } catch (err) {
+      setTrendError('Failed to load trend data');
+      console.error('Trend fetch error:', err);
+    } finally {
+      setTrendLoading(false);
+    }
+  }, [selectedSubscription, trendStart, trendEnd, trendScope]);
+
+  useEffect(() => {
+    if (selectedSubscription) fetchTrends();
+  }, [selectedSubscription, trendStart, trendEnd, trendScope, fetchTrends]);
 
   return (
     <div className="space-y-6">
@@ -282,6 +293,68 @@ export default function Analytics() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Trends */}
+          <div className="admin-card p-6">
+            <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Trends</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Scope</label>
+                <ThemedSelect
+                  value={trendScope}
+                  onChange={(val) => setTrendScope(val)}
+                  options={[
+                    { value: 'main', label: 'Main' },
+                    { value: 'fallback', label: 'Fallback' },
+                    { value: 'feature:%', label: 'All Features' },
+                  ]}
+                  placeholder="Select scope"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" value={trendStart} onChange={(e) => setTrendStart(e.target.value)} className="border rounded px-2 py-1" />
+                  <input type="date" value={trendEnd} onChange={(e) => setTrendEnd(e.target.value)} className="border rounded px-2 py-1" />
+                </div>
+              </div>
+            </div>
+            {trendError && <div className="text-red-600 text-sm mb-2">{trendError}</div>}
+            {trendLoading ? (
+              <div className="text-gray-600">Loading trends...</div>
+            ) : (
+              <div className="overflow-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-600">
+                      <th className="px-2 py-1">Date</th>
+                      <th className="px-2 py-1">Scope</th>
+                      <th className="px-2 py-1">Requests</th>
+                      <th className="px-2 py-1">Input Tokens</th>
+                      <th className="px-2 py-1">Output Tokens</th>
+                      <th className="px-2 py-1">Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trendRows.length === 0 ? (
+                      <tr><td className="px-2 py-2 text-gray-500" colSpan={6}>No data for selected filters.</td></tr>
+                    ) : (
+                      trendRows.map((r, idx) => (
+                        <tr key={idx} className="border-t">
+                          <td className="px-2 py-1">{r.date}</td>
+                          <td className="px-2 py-1">{r.scope}</td>
+                          <td className="px-2 py-1">{r.total_requests.toLocaleString()}</td>
+                          <td className="px-2 py-1">{r.total_input_tokens.toLocaleString()}</td>
+                          <td className="px-2 py-1">{r.total_output_tokens.toLocaleString()}</td>
+                          <td className="px-2 py-1">${r.estimated_cost_usd.toFixed(6)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Cost Breakdown */}

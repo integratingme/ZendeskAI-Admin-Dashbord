@@ -1,4 +1,5 @@
 import { ApiError } from './api';
+import { userAuthEvents } from '@/contexts/userAuthEvents';
 
 
 
@@ -45,8 +46,36 @@ class UserApiService {
 
   private async handleResponse(response: Response) {
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new ApiError(response.status, errorData.detail || `HTTP ${response.status}`);
+      // Notify global listener on unauthorized
+      if (response.status === 401) {
+        userAuthEvents.emitUnauthorized();
+      }
+      // Try to parse error message gracefully
+      let message = `HTTP ${response.status}`;
+      try {
+        const data: unknown = await response.json();
+        type ErrorEnvelope = { message?: string; detail?: string | { message?: string } };
+        const body = data as ErrorEnvelope;
+        // Prefer structured detail.message or message, then detail string
+        if (body.detail && typeof body.detail === 'object' && typeof (body.detail as { message?: string }).message === 'string') {
+          message = ((body.detail as { message?: string }).message as string) || message;
+        } else if (typeof body.message === 'string') {
+          message = body.message || message;
+        } else if (typeof body.detail === 'string') {
+          message = body.detail || message;
+        }
+      } catch {
+        try {
+          const text = await response.text();
+          message = text || message;
+        } catch (e2) {
+          // Ensure non-empty catch to satisfy eslint(no-empty)
+          if (typeof console !== 'undefined' && console.debug) {
+            console.debug('Failed to parse error response body', e2);
+          }
+        }
+      }
+      throw new ApiError(response.status, message);
     }
     return response.json();
   }

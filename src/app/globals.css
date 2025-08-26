@@ -300,3 +300,8 @@ input[type="date"]::-webkit-inner-spin-button {
 input[type="date"]::-moz-calendar-picker-indicator {
   display: none !important;
 }
+
+/* Themed radio color: black in light theme, orange in dark theme via --accent */
+input[type="radio"] {
+  accent-color: var(--accent);
+}

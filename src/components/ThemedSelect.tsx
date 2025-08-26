@@ -96,11 +96,11 @@ export default function ThemedSelect({
         aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleKeyDown}
-        className="w-full p-3 rounded-lg border transition-colors text-left focus:outline-none"
+        className="w-full px-3 py-2 rounded-lg border transition-colors text-left focus:outline-none"
         style={{
           background: "var(--card-bg)",
           border: "1px solid var(--border)",
-          color: "var(--foreground)",
+          color: "var(--foreground)"
         }}
       >
         <span>{selectedLabel || <span style={{ opacity: 0.6 }}>{placeholder}</span>}</span>
@@ -115,7 +115,7 @@ export default function ThemedSelect({
           className="absolute z-[70] mt-1 max-h-60 w-full overflow-auto rounded-lg shadow-lg themed-scroll"
           style={{
             background: "var(--card-bg)",
-            border: "1px solid var(--border)",
+            border: "1px solid var(--border)"
           }}
           onKeyDown={handleKeyDown}
         >

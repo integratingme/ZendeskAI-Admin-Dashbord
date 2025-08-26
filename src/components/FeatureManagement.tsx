@@ -81,7 +81,7 @@ export default function FeatureManagement() {
       
       // Load subscriptions, available features, and providers in parallel
       const [subscriptionsResponse, featuresResponse, providersResponse] = await Promise.all([
-        apiService.listSubscriptions(false), // Only active subscriptions for feature management
+        (async () => { const { subscriptions } = await apiService.listSubscriptions(false); return { success: true, data: subscriptions } as { success: boolean; data: Record<string, unknown> }; })(), // normalized
         apiService.getAvailableFeatures(),
         apiService.listProviders()
       ]);
@@ -333,9 +333,6 @@ export default function FeatureManagement() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
             Feature Control
           </h1>
-          <p style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-            Configure and manage features for your subscriptions
-          </p>
         </div>
       </div>
 

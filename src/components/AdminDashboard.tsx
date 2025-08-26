@@ -11,8 +11,9 @@ import Testing from '@/components/Testing';
 import AdminTokens from '@/components/AdminTokens';
 import FeatureManagement from '@/components/FeatureManagement';
 import TierTemplates from '@/components/TierTemplates';
+import AdminPrompts from '@/components/AdminPrompts';
 
-type ActiveSection = 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens' | 'features' | 'templates';
+type ActiveSection = 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens' | 'features' | 'templates' | 'prompts';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
@@ -36,6 +37,8 @@ export default function AdminDashboard() {
         return <FeatureManagement />;
       case 'templates':
         return <TierTemplates />;
+      case 'prompts':
+        return <AdminPrompts />;
       default:
         return <Overview />;
     }

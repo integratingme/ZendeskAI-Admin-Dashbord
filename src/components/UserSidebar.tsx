@@ -1,64 +1,78 @@
 'use client';
 
-import { FiX, FiHome, FiSettings, FiUser, FiSun, FiMoon } from 'react-icons/fi';
-import { FiPlay } from 'react-icons/fi';
+import { FiX, FiHome, FiUser, FiSun, FiMoon, FiActivity, FiLink } from 'react-icons/fi';
+import { CgOptions } from 'react-icons/cg';
 import { TbPrompt } from 'react-icons/tb';
 import { GrSync } from 'react-icons/gr';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useRouter } from 'next/navigation';
 
-type ActiveSection = 'overview' | 'features' | 'testing' | 'settings' | 'prompts' | 'macros';
+type ActiveSection = 'overview' | 'features' | 'testing' | 'settings' | 'prompts' | 'macros' | 'integrations';
 
 interface UserSidebarProps {
   activeSection: ActiveSection;
-  onSectionChange: (section: ActiveSection) => void;
   isOpen: boolean;
   onToggle: () => void;
 }
 
-export default function UserSidebar({ activeSection, onSectionChange, isOpen, onToggle }: UserSidebarProps) {
+export default function UserSidebar({ activeSection, isOpen, onToggle }: UserSidebarProps) {
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
   
   const menuItems = [
     {
       id: 'overview' as ActiveSection,
       label: 'Overview',
       icon: FiHome,
-      description: 'Dashboard summary'
+      description: 'Dashboard summary',
+      path: '/user/overview'
     },
     {
       id: 'features' as ActiveSection,
       label: 'Features',
-      icon: FiSettings,
-      description: 'Manage AI features'
+      icon: CgOptions,
+      description: 'Manage AI features',
+      path: '/user/features'
     },
     {
       id: 'testing' as ActiveSection,
       label: 'Testing',
-      icon: FiPlay,
-      description: 'Test configurations'
-    },
-    {
-      id: 'settings' as ActiveSection,
-      label: 'Settings',
-      icon: FiUser,
-      description: 'Account settings'
+      icon: FiActivity,
+      description: 'Test configurations',
+      path: '/user/testing'
     },
     {
       id: 'prompts' as ActiveSection,
       label: 'Prompts',
       icon: TbPrompt,
-      description: 'Manage prompts'
+      description: 'Manage prompts',
+      path: '/user/prompts'
     },
     {
       id: 'macros' as ActiveSection,
       label: 'Macros',
       icon: GrSync,
-      description: 'Sync and manage macros'
+      description: 'Sync and manage macros',
+      path: '/user/macros'
+    },
+    {
+      id: 'integrations' as ActiveSection,
+      label: 'Integrations',
+      icon: FiLink,
+      description: 'Connect Zendesk and Confluence',
+      path: '/user/integrations'
+    },
+    {
+      id: 'settings' as ActiveSection,
+      label: 'Settings',
+      icon: FiUser,
+      description: 'Account settings',
+      path: '/user/settings'
     }
   ];
 
-  const handleSectionClick = (sectionId: ActiveSection) => {
-    onSectionChange(sectionId);
+  const handleSectionClick = (path: string) => {
+    router.push(path);
     if (window.innerWidth < 768) {
       onToggle(); // Close sidebar on mobile after selection
     }
@@ -75,13 +89,13 @@ export default function UserSidebar({ activeSection, onSectionChange, isOpen, on
       )}
 
       {/* Sidebar */}
-      <div 
+      <div
         className={`fixed md:relative inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ 
-          background: 'var(--card-bg)', 
-          borderRight: '1px solid var(--border)' 
+        style={{
+          background: 'var(--card-bg)',
+          borderRight: '1px solid var(--border)'
         }}
       >
         {/* Header */}
@@ -121,7 +135,7 @@ export default function UserSidebar({ activeSection, onSectionChange, isOpen, on
               return (
                 <button
                   key={item.id}
-                  onClick={() => handleSectionClick(item.id)}
+                  onClick={() => handleSectionClick(item.path)}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${
                     isActive ? 'shadow-sm' : ''
                   }`}
@@ -158,7 +172,7 @@ export default function UserSidebar({ activeSection, onSectionChange, isOpen, on
           </div>
           
           {/* Theme Toggle */}
-          <div className="mt-6 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="mt-6 pt-4">
             <button
               onClick={toggleTheme}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left"

@@ -132,7 +132,7 @@ export default function DateRangePicker({ startDate, endDate, onChange }: DateRa
         {startDate && endDate && new Date(endDate) <= new Date(startDate) && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <p className="text-sm text-red-600">
-              ⚠️ End date must be after start date
+              End date must be after start date
             </p>
           </div>
         )}

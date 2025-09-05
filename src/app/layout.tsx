@@ -13,8 +13,8 @@ const mavenPro = Maven_Pro({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard - Indesk AI Assistant",
-  description: "Admin interface for managing AI assistant subscriptions",
+  title: "IndeskAI",
+  description: "AI Assistant platform",
 };
 
 export default function RootLayout({
@@ -32,6 +32,22 @@ export default function RootLayout({
         }}
         suppressHydrationWarning={true}
       >
+        {/* Prevent theme flash: set data-theme before hydration */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(
+              function(){
+                try{
+                  var t = localStorage.getItem('app-theme');
+                  if(!t){
+                    var m = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    t = m ? 'dark' : 'light';
+                  }
+                  document.documentElement.setAttribute('data-theme', t);
+                }catch(e){}
+              })();`
+          }}
+        />
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>

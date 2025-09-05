@@ -57,8 +57,8 @@ export default function FeatureConfigurationForm({
   const fetchAvailableFeatures = useCallback(async () => {
     try {
       const response = await apiService.getAvailableFeatures();
-      if (response.success && response.data) {
-        setAvailableFeatures(response.data as Record<string, {
+      if (response.success && response.features) {
+        setAvailableFeatures(response.features as Record<string, {
           name: string;
           display_name: string;
           description: string;
@@ -66,9 +66,9 @@ export default function FeatureConfigurationForm({
         }>);
         
         // Initialize features config if empty
-        if (Object.keys(featuresConfig).length === 0) {
+        if (Object.keys(featuresConfig).length === 0 && response.features) {
           const defaultConfig: Record<string, FeatureConfig> = {};
-          Object.keys(response.data as Record<string, unknown>).forEach(featureName => {
+          Object.keys(response.features as Record<string, unknown>).forEach(featureName => {
             defaultConfig[featureName] = {
               is_enabled: false,
               use_custom_llm: false
@@ -163,9 +163,16 @@ export default function FeatureConfigurationForm({
   if (loading) {
     return (
       <div className="admin-card p-4">
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mr-3"></div>
-          <span>Loading features...</span>
+        <div className="space-y-4 animate-pulse py-6">
+          <div className="h-6 w-48 rounded skeleton-block" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="border border-gray-200 rounded-lg p-3">
+                <div className="h-5 w-40 rounded skeleton-block mb-2" />
+                <div className="h-4 w-64 rounded skeleton-block" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

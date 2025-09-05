@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ThemeToggle from '@/components/ThemeToggle';
 import { FiUser, FiSettings, FiArrowRight } from 'react-icons/fi';
 import { useLoginFlow } from '@/contexts/LoginFlowContext';
 
@@ -18,7 +19,13 @@ export default function LoginSelector() {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
-      <div className="w-full max-w-md p-8">
+      <div className="w-full max-w-md p-8 relative">
+        <div className="fixed top-4 left-4">
+          {/* Optional: brand/logo or keep empty */}
+        </div>
+        <div className="fixed top-4 right-4">
+          <ThemeToggle />
+        </div>
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2" style={{ color: 'var(--foreground)' }}>

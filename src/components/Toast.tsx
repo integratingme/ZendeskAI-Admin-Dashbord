@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { FiCheck, FiX, FiAlertTriangle, FiInfo } from 'react-icons/fi';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -75,18 +75,18 @@ function ToastItem({ toast, onRemove }: ToastProps) {
     `}
     style={{ background: 'var(--card-bg)' }}>
       <div className={`
-        flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center
+        flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5
         ${getIconBg()}
       `}>
         {getIcon()}
       </div>
-      
+
       <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-sm" style={{ color: 'var(--foreground)' }}>
+        <h4 className="font-semibold text-sm leading-tight" style={{ color: 'var(--foreground)' }}>
           {toast.title}
         </h4>
         {toast.message && (
-          <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+          <p className="text-sm mt-1 leading-tight" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
             {toast.message}
           </p>
         )}
@@ -132,30 +132,30 @@ export function ToastContainer({ toasts, onRemove }: ToastContainerProps) {
 export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const addToast = (toast: Omit<Toast, 'id'>) => {
+  const addToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts(prev => [...prev, { ...toast, id }]);
-  };
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts(prev => prev.filter(toast => toast.id !== id));
-  };
+  }, []);
 
-  const success = (title: string, message?: string, duration?: number) => {
+  const success = useCallback((title: string, message?: string, duration?: number) => {
     addToast({ type: 'success', title, message, duration });
-  };
+  }, [addToast]);
 
-  const error = (title: string, message?: string, duration?: number) => {
+  const error = useCallback((title: string, message?: string, duration?: number) => {
     addToast({ type: 'error', title, message, duration });
-  };
+  }, [addToast]);
 
-  const warning = (title: string, message?: string, duration?: number) => {
+  const warning = useCallback((title: string, message?: string, duration?: number) => {
     addToast({ type: 'warning', title, message, duration });
-  };
+  }, [addToast]);
 
-  const info = (title: string, message?: string, duration?: number) => {
+  const info = useCallback((title: string, message?: string, duration?: number) => {
     addToast({ type: 'info', title, message, duration });
-  };
+  }, [addToast]);
 
   return {
     toasts,

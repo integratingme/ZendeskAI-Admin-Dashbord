@@ -96,7 +96,7 @@ export default function ThemedSelect({
         aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleKeyDown}
-        className="w-full px-3 py-2 rounded-lg border transition-colors text-left focus:outline-none"
+        className="w-full p-3 rounded-lg border transition-colors text-left focus:outline-none flex items-center"
         style={{
           background: "var(--card-bg)",
           border: "1px solid var(--border)",

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useRouter } from 'next/navigation';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { 
   FiBarChart2, 
@@ -21,26 +22,26 @@ import { TbPrompt } from 'react-icons/tb';
 
 interface SidebarProps {
   activeSection: string;
-  onSectionChange: (section: 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens' | 'features' | 'templates') => void;
   isOpen?: boolean;
   onToggle?: () => void;
 }
 
 const menuItems = [
-  { id: 'overview', label: 'Overview', icon: FiBarChart2 },
-  { id: 'subscriptions', label: 'Subscriptions', icon: FiUsers },
-  { id: 'analytics', label: 'Analytics', icon: FiTrendingUp },
-  { id: 'providers', label: 'Providers', icon: FiSettings },
-  { id: 'testing', label: 'Testing', icon: FiActivity },
-  { id: 'tokens', label: 'Admin Tokens', icon: FiKey },
-  { id: 'features', label: 'Feature Control', icon: CgOptions },
-  { id: 'templates', label: 'Tier Templates', icon: FiLayers },
-  { id: 'prompts', label: 'Prompts', icon: TbPrompt },
+  { id: 'overview', label: 'Overview', icon: FiBarChart2, path: '/admin/overview' },
+  { id: 'subscriptions', label: 'Subscriptions', icon: FiUsers, path: '/admin/subscriptions' },
+  { id: 'analytics', label: 'Analytics', icon: FiTrendingUp, path: '/admin/analytics' },
+  { id: 'providers', label: 'Providers', icon: FiSettings, path: '/admin/providers' },
+  { id: 'testing', label: 'Testing', icon: FiActivity, path: '/admin/testing' },
+  { id: 'tokens', label: 'Admin Tokens', icon: FiKey, path: '/admin/tokens' },
+  { id: 'features', label: 'Feature Control', icon: CgOptions, path: '/admin/features' },
+  { id: 'templates', label: 'Tier Templates', icon: FiLayers, path: '/admin/templates' },
+  { id: 'prompts', label: 'Prompts', icon: TbPrompt, path: '/admin/prompts' },
 ];
 
-export default function Sidebar({ activeSection, onSectionChange, isOpen = true, onToggle }: SidebarProps) {
+export default function Sidebar({ activeSection, isOpen = true, onToggle }: SidebarProps) {
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = () => {
@@ -56,8 +57,8 @@ export default function Sidebar({ activeSection, onSectionChange, isOpen = true,
     setShowLogoutConfirm(false);
   };
 
-  const handleMenuItemClick = (section: Parameters<typeof onSectionChange>[0]) => {
-    onSectionChange(section);
+  const handleMenuItemClick = (path: string) => {
+    router.push(path);
     // Close mobile menu after selection
     if (onToggle && window.innerWidth < 768) {
       onToggle();
@@ -94,7 +95,7 @@ export default function Sidebar({ activeSection, onSectionChange, isOpen = true,
           return (
             <button
               key={item.id}
-              onClick={() => handleMenuItemClick(item.id as Parameters<typeof onSectionChange>[0])}
+              onClick={() => handleMenuItemClick(item.path)}
               className={`w-full flex items-center gap-3 px-3 md:px-4 py-3 rounded-lg text-left transition-colors ${
                 activeSection === item.id
                   ? 'text-white'

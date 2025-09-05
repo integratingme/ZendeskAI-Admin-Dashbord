@@ -191,6 +191,12 @@ body {
 }
 
 /* Fix white backgrounds in components */
+
+/* Skeleton utility */
+:root { --skeleton-color: var(--foreground); }
+[data-theme="dark"] { --skeleton-color: var(--accent); }
+[data-theme="light"] { --skeleton-color: var(--foreground); }
+.skeleton-block { background: var(--skeleton-color); opacity: 0.12; }
 .bg-gray-50,
 .bg-gray-100 {
   background: var(--muted) !important;
@@ -239,6 +245,13 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--accent) !important;
 }
 
+/* Placeholder text styling for theme support */
+input::placeholder, select::placeholder, textarea::placeholder {
+  color: var(--foreground) !important;
+  opacity: 0.6 !important;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
 /* Custom themed scrollbar */
 .themed-scroll::-webkit-scrollbar {
   width: 10px;
@@ -267,8 +280,78 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* Preserve existing transitions for interactive elements */
-button, a, .admin-button, .admin-button-outline, .theme-toggle {
+button, a, .admin-button, .admin-button-outline, .theme-toggle, .action-text-button {
   transition: all 0.2s ease !important;
+}
+
+/* Action buttons in table (View/Edit/Delete) with theme-aware styles */
+.action-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem; /* ~gap-1 */
+  padding: 0.25rem 0.5rem; /* ~py-1 px-2 */
+  border-radius: 0.375rem; /* ~rounded-md */
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+/* Light theme: smoky light black base, hover to dark black */
+[data-theme="light"] .action-text-button {
+  background: #f5f5f5; /* smoky light black */
+  color: #000000;
+}
+[data-theme="light"] .action-text-button:hover {
+  background: #000000; /* dark black */
+  color: #ffffff;
+}
+
+/* Dark theme: appear white base, hover to orange (theme accent) */
+[data-theme="dark"] .action-text-button {
+  background: #ffffff; /* white */
+  color: #000000; /* readable on white */
+}
+[data-theme="dark"] .action-text-button:hover {
+  background: var(--accent); /* orange per theme */
+  color: #ffffff; /* white text on accent */
+}
+
+/* Text loader animations */
+@keyframes caret-blink { 0%, 45% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes dot-pulse {
+  0% { transform: translateX(0); opacity: .85; }
+  50% { transform: translateX(2px); opacity: 1; }
+  100% { transform: translateX(0); opacity: .85; }
+}
+@keyframes breathe { 0% { opacity: .7; } 50% { opacity: 1; } 100% { opacity: .7; } }
+
+.text-loader-dot {
+  width: 10px; height: 10px; border-radius: 50%; background: var(--accent);
+  display: inline-block; margin-right: 10px; animation: dot-pulse 1.2s ease-in-out infinite;
+}
+.text-loader-caret { width: 1px; height: 1em; display: inline-block; background: var(--foreground); margin-left: 2px; animation: caret-blink 1s steps(1,end) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .text-loader-dot { animation: breathe 2s ease-in-out infinite; }
+  .text-loader-caret { animation: none; opacity: .6; }
+}
+
+/* Accessibility: respect reduced motion preference for pulse */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse { animation: none !important; opacity: 0.8; }
+}
+
+/* Ripple animations */
+@keyframes ripple {
+  0% { transform: scale(0.9); opacity: 0.35; }
+  70% { transform: scale(2.3); opacity: 0.1; }
+  100% { transform: scale(2.7); opacity: 0; }
+}
+
+.animate-ripple { animation: ripple 1.8s ease-out infinite; }
+.animate-ripple-delayed { animation: ripple 1.8s ease-out infinite; animation-delay: 0.9s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ripple, .animate-ripple-delayed { animation: none; opacity: 0.5; }
 }
 
 /* Toggle switch ripple animation */
@@ -304,4 +387,84 @@ input[type="date"]::-moz-calendar-picker-indicator {
 /* Themed radio color: black in light theme, orange in dark theme via --accent */
 input[type="radio"] {
   accent-color: var(--accent);
+}
+/* Themed action buttons (View/Edit/Delete) styled via inline color marker */
+.admin-card table button.flex.items-center.gap-1[style*="var(--accent)"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem; /* ~gap-1 */
+  padding: 0.25rem 0.5rem; /* ~py-1 px-2 */
+  border-radius: 0.375rem; /* ~rounded-md */
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+/* Light theme: smoky light black base, hover to dark black */
+[data-theme="light"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"] {
+  background: #f5f5f5; /* smoky light black */
+  color: #000000 !important;
+}
+[data-theme="light"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"]:hover {
+  background: #000000; /* dark black */
+  color: #ffffff !important;
+}
+
+/* Dark theme: appear white base, hover to orange (theme accent) */
+[data-theme="dark"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"] {
+  background: #ffffff; /* white */
+  color: #000000 !important; /* readable on white */
+}
+[data-theme="dark"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"]:hover {
+  background: var(--accent); /* orange per theme */
+  color: #ffffff !important; /* white text on accent */
+}
+/* Override: make action buttons text-only with theme-aware colors (no boxes) */
+.admin-card table button.flex.items-center.gap-1[style*="var(--accent)"] {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Light theme: smoky light black text, hover to dark black */
+[data-theme="light"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"] {
+  color: #4a4a4a !important;
+}
+[data-theme="light"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"]:hover {
+  color: #000000 !important;
+}
+
+/* Dark theme: white text, hover to theme accent (orange) */
+[data-theme="dark"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"] {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .admin-card table button.flex.items-center.gap-1[style*="var(--accent)"]:hover {
+  color: var(--accent) !important;
+}
+/* Text Loader Styles */
+.text-loader-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  margin-right: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.text-loader-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background: var(--accent);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }

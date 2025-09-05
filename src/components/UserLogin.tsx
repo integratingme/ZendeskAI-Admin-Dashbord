@@ -7,6 +7,7 @@ import { useToastContext } from '@/contexts/ToastContext';
 
 
 import { useLoginFlow } from '@/contexts/LoginFlowContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function UserLogin() {
   const [email, setEmail] = useState('');
@@ -34,24 +35,9 @@ export default function UserLogin() {
     } catch (error: unknown) {
       console.error('Login error:', error);
       
-      let errorMessage = 'Login failed. Please try again.';
-      
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      if (errorMsg) {
-        if (errorMsg.includes('Invalid subscription key')) {
-          errorMessage = 'Invalid subscription key. Please check your credentials.';
-        } else if (errorMsg.includes('Email does not match')) {
-          errorMessage = 'Email does not match the subscription. Please verify your email address.';
-        } else if (errorMsg.includes('Subscription is inactive')) {
-          errorMessage = 'Your subscription is inactive. Please contact support.';
-        } else if (errorMsg.includes('Subscription has expired')) {
-          errorMessage = 'Your subscription has expired. Please renew your subscription.';
-        } else {
-          errorMessage = errorMsg;
-        }
-      }
-      
-      toast.error('Login Failed', errorMessage);
+      // Show generic error message for security reasons
+      // Avoid revealing specific authentication failure details
+      toast.error('Login Failed', 'Invalid credentials. Please check your email and subscription key.');
     } finally {
       setIsLoading(false);
     }
@@ -60,21 +46,35 @@ export default function UserLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
       <div className="w-full max-w-md p-8">
-        {/* Back Button */}
-        <button
-          onClick={() => setLoginType('selector')}
-          className="absolute top-4 left-4 flex items-center space-x-2 text-sm transition-colors"
-          style={{ color: 'var(--foreground)', opacity: 0.7 }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '0.7';
-          }}
-        >
-          <FiArrowLeft />
-          <span>Back to login selection</span>
-        </button>
+        {/* Header Row */}
+        <div className="fixed top-4 left-4">
+          <button
+            onClick={() => setLoginType('selector')}
+            className="flex items-center space-x-2 text-sm transition-colors"
+            style={{ color: 'var(--foreground)', opacity: 0.7 }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.7'; }}
+          >
+            <FiArrowLeft />
+            <span>Back</span>
+          </button>
+        </div>
+        <div className="fixed top-4 right-4">
+          <ThemeToggle />
+        </div>
+        <div className="hidden">
+          <button
+            onClick={() => setLoginType('selector')}
+            className="flex items-center space-x-2 text-sm transition-colors"
+            style={{ color: 'var(--foreground)', opacity: 0.7 }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.7'; }}
+          >
+            <FiArrowLeft />
+            <span>Back</span>
+          </button>
+          <ThemeToggle />
+        </div>
 
         {/* Header */}
         <div className="text-center mb-8">
@@ -189,6 +189,10 @@ export default function UserLogin() {
           <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.6 }}>
             Don&apos;t have a subscription key?{' '}
             <span style={{ color: 'var(--accent)' }}>Contact your administrator</span>
+          </p>
+          <p className="text-sm mt-2" style={{ color: 'var(--foreground)', opacity: 0.6 }}>
+            New user?{' '}
+            <a href="/signup" className="underline" style={{ color: 'var(--accent)' }}>Sign up here</a>
           </p>
         </div>
 

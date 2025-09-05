@@ -1,0 +1,299 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { apiService, ApiError } from '@/lib/api';
+import { FiUsers, FiDollarSign, FiActivity, FiTrendingUp } from 'react-icons/fi';
+
+interface OverviewStats {
+  total_subscriptions: number;
+  total_cost_usd: number;
+  total_requests: number;
+  total_tokens: number;
+  average_cost_per_subscription: number;
+  subscription_days_breakdown: {
+    "30": number;
+    "90": number;
+    "365": number;
+  };
+  provider_usage: {
+    [key: string]: {
+      main_usage: number;
+      fallback_usage: number;
+    };
+  };
+}
+
+import AdminLayout from '@/components/AdminLayout';
+
+export default function AdminOverviewPage() {
+  const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Set page title
+  useEffect(() => {
+    document.title = 'Admin Dashboard - Overview';
+  }, []);
+
+  useEffect(() => {
+    fetchOverviewStats();
+  }, []);
+
+  const fetchOverviewStats = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await apiService.getAnalyticsOverview();
+      console.log('Overview API response:', response);
+      console.log('Response keys:', Object.keys(response));
+      console.log('Response.success:', response.success);
+      console.log('Response.overview:', response.overview);
+      
+      // Check if response has overview data
+      if (response.success && response.overview) {
+        console.log('Using success + overview path');
+        setStats(response.overview as unknown as OverviewStats);
+      } else if (response.overview) {
+        console.log('Using overview only path');
+        setStats(response.overview as unknown as OverviewStats);
+      } else if ((response as unknown as Record<string, unknown>).total_subscriptions !== undefined) {
+        console.log('Using direct stats path');
+        setStats(response as unknown as OverviewStats);
+      } else {
+        console.log('No valid overview data found, using defaults');
+        console.log('Available response properties:', Object.keys(response));
+        // Create a default stats object when no data is available
+        const defaultStats: OverviewStats = {
+          total_subscriptions: 0,
+          total_cost_usd: 0,
+          total_requests: 0,
+          total_tokens: 0,
+          average_cost_per_subscription: 0,
+          subscription_days_breakdown: { "30": 0, "90": 0, "365": 0 },
+          provider_usage: {}
+        };
+        setStats(defaultStats);
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(`API Error: ${err.message}`);
+      } else {
+        setError('Failed to fetch overview statistics');
+      }
+      console.error('Error fetching overview:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout activeSection="overview">
+        <div className="space-y-6 animate-pulse">
+          {/* Header skeleton */}
+          <div className="flex items-center justify-between">
+            <div className="h-8 w-40 rounded skeleton-block" />
+            <div className="h-8 w-24 rounded skeleton-block" />
+          </div>
+
+          {/* Key Metrics Cards Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="admin-card p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-3">
+                    <div className="h-4 w-28 rounded skeleton-block" />
+                    <div className="h-8 w-20 rounded skeleton-block" />
+                  </div>
+                  <div className="h-8 w-8 rounded-full skeleton-block" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Subscription Duration Breakdown Skeleton */}
+          <div className="admin-card p-6">
+            <div className="h-5 w-64 rounded skeleton-block mb-4" />
+            <div className="grid grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="text-center space-y-2">
+                  <div className="h-8 w-12 mx-auto rounded skeleton-block" />
+                  <div className="h-4 w-20 mx-auto rounded skeleton-block" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Provider Usage Skeleton */}
+          <div className="admin-card p-6">
+            <div className="h-5 w-40 rounded skeleton-block mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full skeleton-block" />
+                    <div className="h-4 w-28 rounded skeleton-block" />
+                  </div>
+                  <div className="h-4 w-40 rounded skeleton-block" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* System Health Skeleton */}
+          <div className="admin-card p-6">
+            <div className="h-5 w-36 rounded skeleton-block mb-4" />
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="h-4 w-24 rounded skeleton-block" />
+                  <div className="h-6 w-24 rounded skeleton-block" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout activeSection="overview">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{error}</p>
+          <button 
+            onClick={fetchOverviewStats}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!stats) return (
+    <AdminLayout activeSection="overview">
+      <div>No data available</div>
+    </AdminLayout>
+  );
+
+  return (
+    <AdminLayout activeSection="overview">
+      <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Overview</h1>
+        <button 
+          onClick={fetchOverviewStats}
+          className="admin-button-outline px-4 py-2 rounded-lg"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {/* Key Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="admin-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Subscriptions</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>{stats.total_subscriptions || 0}</p>
+            </div>
+            <FiUsers className="text-2xl text-gray-400" />
+          </div>
+        </div>
+        
+        <div className="admin-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Cost</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>${stats.total_cost_usd?.toFixed(2) || '0.00'}</p>
+            </div>
+            <FiDollarSign className="text-2xl text-gray-400" />
+          </div>
+        </div>
+        
+        <div className="admin-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Requests</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>{stats.total_requests?.toLocaleString() || '0'}</p>
+            </div>
+            <FiActivity className="text-2xl text-gray-400" />
+          </div>
+        </div>
+        
+        <div className="admin-card p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-600">Avg Cost/Sub</h3>
+              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>${stats.average_cost_per_subscription?.toFixed(2) || '0.00'}</p>
+            </div>
+            <FiTrendingUp className="text-2xl text-gray-400" />
+          </div>
+        </div>
+      </div>
+
+      {/* Subscription Duration Breakdown */}
+      <div className="admin-card p-6">
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Subscription Duration Breakdown</h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center">
+            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["30"] || 0}</p>
+            <p className="text-sm text-gray-600">30 Days</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["90"] || 0}</p>
+            <p className="text-sm text-gray-600">90 Days</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["365"] || 0}</p>
+            <p className="text-sm text-gray-600">365 Days</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Provider Usage */}
+      <div className="admin-card p-6">
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Provider Usage</h3>
+        <div className="space-y-4">
+          {Object.entries(stats.provider_usage || {}).map(([provider, usage]) => (
+            <div key={provider} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 rounded-full" style={{ background: 'var(--accent)' }}></div>
+                <span className="font-medium capitalize">{provider}</span>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-gray-600">
+                  Main: {usage.main_usage || 0} | Fallback: {usage.fallback_usage || 0}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* System Health */}
+      <div className="admin-card p-6">
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>System Health</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">API Status</span>
+            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Operational</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">Database</span>
+            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Healthy</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-gray-600">LLM Providers</span>
+            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">All Online</span>
+          </div>
+        </div>
+      </div>
+      </div>
+    </AdminLayout>
+  );
+}

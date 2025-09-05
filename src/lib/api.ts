@@ -1,5 +1,10 @@
 // API configuration and service functions
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const _ENV_BASE_URL: string | undefined = process.env.NEXT_PUBLIC_API_BASE_URL as unknown as string | undefined;
+if (!_ENV_BASE_URL) {
+  throw new Error('NEXT_PUBLIC_API_BASE_URL is required. Set it in your environment (e.g., .env.local)');
+}
+// Normalize (remove trailing slash)
+const API_BASE_URL = _ENV_BASE_URL.replace(/\/$/, '');
 
 // API Error class
 export class ApiError extends Error {
@@ -32,7 +37,7 @@ interface TokenListResponse {
   data: {
     count: number;
     max_allowed: number;
-    tokens: {[key: string]: AdminToken};
+    tokens: { [key: string]: AdminToken };
   };
   message: string;
 }
@@ -46,61 +51,204 @@ interface SubscriptionResponse {
   success: boolean;
   subscriptions?: Record<string, unknown>;
   count?: number;
+  total_count?: number;
+  page?: number;
+  limit?: number;
   data?: {
     subscriptions?: Record<string, unknown>;
     count?: number;
+    total_count?: number;
+    page?: number;
+    limit?: number;
   };
   message: string;
 }
 
-interface AnalyticsResponse {
+// New concrete shapes matching Postgres backend responses
+interface OverviewResponse {
   success: boolean;
-  data?: Record<string, unknown>;
+  overview: Record<string, unknown>;
   message: string;
 }
 
-interface ProvidersResponse {
+interface UsageResponse {
   success: boolean;
-  data?: Record<string, unknown>;
+  subscription_key: string;
+  usage_stats?: Record<string, unknown>;
   message: string;
+}
+
+interface CostResponse {
+  success: boolean;
+  subscription_key: string;
+  cost_breakdown?: Record<string, unknown>;
+  message: string;
+}
+
+interface UsageDailyRow {
+  date: string;
+  scope: string;
+  total_requests: number;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  estimated_cost_usd: number;
+  used_count?: number;
+}
+
+interface UsageDailyResponse {
+  success: boolean;
+  subscription_key: string;
+  rows: UsageDailyRow[];
+  message: string;
+}
+
+export interface Provider {
+  name: string;
+  endpoint: string;
+  auth_type: string;
+  format: string;
+  example_models: string[];
+  models_guide: string;
+  default_pricing: {
+    [key: string]: {
+      input: number;
+      output: number;
+    };
+  };
+}
+
+interface ProvidersListResponse {
+  success: boolean;
+  providers: Record<string, Provider>;
+  message: string;
+}
+
+interface TestConnectionResponse {
+  success: boolean;
+  result: Record<string, unknown>;
+  message: string;
+}
+
+interface ProviderModelsResponse {
+  success: boolean;
+  provider: string;
+  example_models: string[];
+  models_guide: string;
+  default_pricing: Record<string, unknown>;
+  message: string;
+}
+
+interface AvailableFeaturesResponse {
+  success: boolean;
+  features?: Record<string, {
+    name: string;
+    display_name: string;
+    description: string;
+    category: string;
+  }>;
+  categories?: Record<string, string[]>;
+  total_count?: number;
 }
 
 interface TestingResponse {
   success: boolean;
   data?: Record<string, unknown>;
   message: string;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 
 
 export class ApiService {
+  // Optional callback for admin token changes (set by AuthContext)
+  onAdminTokensChanged?: (accessToken: string | null, refreshToken: string | null, meta?: { expires_in?: number }) => void;
   private baseURL: string;
-  private adminToken: string | null = null;
+  private adminAccessToken: string | null = null;
+  private adminRefreshToken: string | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
-    // Try to get token from localStorage on client side
+    // Try to get tokens from sessionStorage on client side (more production-friendly than localStorage)
     if (typeof window !== 'undefined') {
-      this.adminToken = localStorage.getItem('admin_token');
+      this.adminAccessToken = sessionStorage.getItem('admin_access_token');
+      this.adminRefreshToken = sessionStorage.getItem('admin_refresh_token');
+    }
+  }
+
+  private persistTokens() {
+    if (typeof window !== 'undefined') {
+      if (this.adminAccessToken) sessionStorage.setItem('admin_access_token', this.adminAccessToken);
+      else sessionStorage.removeItem('admin_access_token');
+      if (this.adminRefreshToken) sessionStorage.setItem('admin_refresh_token', this.adminRefreshToken);
+      else sessionStorage.removeItem('admin_refresh_token');
     }
   }
 
   setAdminToken(token: string) {
-    this.adminToken = token;
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('admin_token', token);
-    }
+    this.adminAccessToken = token;
+    this.persistTokens();
+  }
+
+  setAdminTokens(accessToken: string, refreshToken: string) {
+    this.adminAccessToken = accessToken;
+    this.adminRefreshToken = refreshToken;
+    this.persistTokens();
+    // Notify listeners about token change
+    this.onAdminTokensChanged?.(this.adminAccessToken, this.adminRefreshToken);
   }
 
   clearAdminToken() {
-    this.adminToken = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin_token');
-    }
+    this.adminAccessToken = null;
+    this.adminRefreshToken = null;
+    this.persistTokens();
+    // Notify listeners about token cleared
+    this.onAdminTokensChanged?.(null, null);
   }
 
   getAuthHeaders(): Record<string, string> {
-    return this.adminToken ? { 'Authorization': `Bearer ${this.adminToken}` } : {};
+    return this.adminAccessToken ? { 'Authorization': `Bearer ${this.adminAccessToken}` } : {};
+  }
+
+  async adminLogin(rawToken: string): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
+    const resp = await this.request<{ success: boolean; access_token: string; refresh_token: string; token_type: string; expires_in: number }>(
+      '/api/admin/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify({ token: rawToken }),
+      }
+    );
+    this.setAdminTokens(resp.access_token, resp.refresh_token);
+    // Pass expires_in meta to listeners to allow scheduling timers
+    this.onAdminTokensChanged?.(resp.access_token, resp.refresh_token, { expires_in: resp.expires_in });
+    return { access_token: resp.access_token, refresh_token: resp.refresh_token, expires_in: resp.expires_in };
+  }
+
+  async refreshAdminTokens(): Promise<boolean> {
+    return this.adminRefresh();
+  }
+
+  private async adminRefresh(): Promise<boolean> {
+    if (!this.adminRefreshToken) return false;
+    try {
+      const resp = await this.request<{ success: boolean; access_token: string; refresh_token: string; token_type: string; expires_in: number }>(
+        '/api/admin/auth/refresh',
+        {
+          method: 'POST',
+          body: JSON.stringify({ refresh_token: this.adminRefreshToken }),
+        }
+      );
+      this.setAdminTokens(resp.access_token, resp.refresh_token);
+      this.onAdminTokensChanged?.(resp.access_token, resp.refresh_token, { expires_in: resp.expires_in });
+      return true;
+    } catch {
+      this.clearAdminToken();
+      return false;
+    }
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -127,11 +275,54 @@ export class ApiService {
     };
 
     try {
-      const response = await fetch(url, config);
+      let response = await fetch(url, config);
       
+      // If unauthorized and we have a refresh token, try to refresh once
+      if (response.status === 401 && this.adminRefreshToken) {
+        const refreshed = await this.adminRefresh();
+        if (refreshed) {
+          const authHeaders = this.getAuthHeaders();
+          const optionHeaders = (options.headers as Record<string, string>) || {};
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            ...authHeaders,
+            ...optionHeaders,
+          };
+          if (this.baseURL.includes('ngrok')) {
+            headers['ngrok-skip-browser-warning'] = 'true';
+          }
+          response = await fetch(url, { ...options, headers: headers as HeadersInit });
+        }
+      }
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new ApiError(response.status, errorText || `HTTP ${response.status}`);
+        let message = `HTTP ${response.status}`;
+        try {
+          const raw = await response.text();
+          if (raw) {
+            try {
+              const data = JSON.parse(raw) as { message?: string; detail?: string | { message?: string } };
+              if (data && typeof data === 'object') {
+                if (data.detail && typeof data.detail === 'object' && typeof (data.detail as { message?: string }).message === 'string') {
+                  message = ((data.detail as { message?: string }).message as string) || message;
+                } else if (typeof data.message === 'string') {
+                  message = data.message || message;
+                } else if (typeof data.detail === 'string') {
+                  message = data.detail || message;
+                } else {
+                  message = raw || message;
+                }
+              } else {
+                message = raw || message;
+              }
+            } catch {
+              message = raw || message;
+            }
+          }
+        } catch {
+          // ignore body parsing issues, keep default message
+        }
+        throw new ApiError(response.status, message);
       }
 
       return await response.json();
@@ -217,12 +408,19 @@ export class ApiService {
     });
   }
 
-  async listSubscriptions(includeExpired: boolean = false): Promise<{ subscriptions: Record<string, unknown>; count: number; raw: SubscriptionResponse }> {
-    const resp = await this.request<SubscriptionResponse>(`/api/admin/subscriptions/list?include_expired=${includeExpired}`);
+  async listSubscriptions(includeExpired: boolean = false, page: number = 1, limit: number = 10, includeCount: boolean = false): Promise<{ subscriptions: Record<string, unknown>; count: number; totalCount?: number; page: number; limit: number; raw: SubscriptionResponse }> {
+    const queryParams = new URLSearchParams({
+      include_expired: includeExpired.toString(),
+      page: page.toString(),
+      limit: limit.toString(),
+      include_count: includeCount.toString()
+    });
+    const resp = await this.request<SubscriptionResponse>(`/api/admin/subscriptions/list?${queryParams}`);
     // Normalize shape: prefer top-level subscriptions/count, fallback to data.*
     const subs = (resp.subscriptions as Record<string, unknown>) || (resp.data?.subscriptions as Record<string, unknown>) || {};
     const count = (typeof resp.count === 'number' ? resp.count : (typeof resp.data?.count === 'number' ? resp.data.count : Object.keys(subs).length));
-    return { subscriptions: subs, count, raw: resp };
+    const totalCount = resp.total_count || resp.data?.total_count;
+    return { subscriptions: subs, count, totalCount, page: resp.page || page, limit: resp.limit || limit, raw: resp };
 
   }
 
@@ -285,30 +483,30 @@ export class ApiService {
   }
 
   // Analytics
-  async getUsageDaily(subscriptionKey: string, params?: { startDate?: string; endDate?: string; scope?: string }): Promise<{ success: boolean; subscription_key: string; rows: Array<{ date: string; scope: string; total_requests: number; total_input_tokens: number; total_output_tokens: number; estimated_cost_usd: number; used_count?: number }>; message: string; }> {
+  async getUsageDaily(subscriptionKey: string, params?: { startDate?: string; endDate?: string; scope?: string }): Promise<UsageDailyResponse> {
     const query = new URLSearchParams();
     if (params?.startDate) query.append('start_date', params.startDate);
     if (params?.endDate) query.append('end_date', params.endDate);
     if (params?.scope) query.append('scope', params.scope);
     const qs = query.toString() ? `?${query.toString()}` : '';
-    return this.request(`/api/admin/analytics/usage/daily/${subscriptionKey}${qs}`);
+    return this.request<UsageDailyResponse>(`/api/admin/analytics/usage/daily/${subscriptionKey}${qs}`);
   }
 
-  async getAnalyticsOverview(): Promise<AnalyticsResponse> {
-    return this.request<AnalyticsResponse>('/api/admin/analytics/overview');
+  async getAnalyticsOverview(): Promise<OverviewResponse> {
+    return this.request<OverviewResponse>('/api/admin/analytics/overview');
   }
 
-  async getSubscriptionUsage(subscriptionKey: string): Promise<AnalyticsResponse> {
-    return this.request<AnalyticsResponse>(`/api/admin/analytics/usage/${subscriptionKey}`);
+  async getSubscriptionUsage(subscriptionKey: string): Promise<UsageResponse> {
+    return this.request<UsageResponse>(`/api/admin/analytics/usage/${subscriptionKey}`);
   }
 
-  async getSubscriptionCosts(subscriptionKey: string): Promise<AnalyticsResponse> {
-    return this.request<AnalyticsResponse>(`/api/admin/analytics/costs/${subscriptionKey}`);
+  async getSubscriptionCosts(subscriptionKey: string): Promise<CostResponse> {
+    return this.request<CostResponse>(`/api/admin/analytics/costs/${subscriptionKey}`);
   }
 
   // Providers
-  async listProviders(): Promise<ProvidersResponse> {
-    return this.request<ProvidersResponse>('/api/admin/providers/list');
+  async listProviders(): Promise<ProvidersListResponse> {
+    return this.request<ProvidersListResponse>('/api/admin/providers/list');
   }
 
   async testProviderConnection(data: {
@@ -316,20 +514,32 @@ export class ApiService {
     model: string;
     endpoint: string;
     api_key: string;
-  }): Promise<ProvidersResponse> {
-    return this.request<ProvidersResponse>('/api/admin/providers/test-connection', {
+  }): Promise<TestConnectionResponse> {
+    return this.request<TestConnectionResponse>('/api/admin/providers/test-connection', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async getProviderModels(provider: string): Promise<ProvidersResponse> {
-    return this.request<ProvidersResponse>(`/api/admin/providers/models/${provider}`);
+  async getProviderModels(provider: string): Promise<ProviderModelsResponse> {
+    return this.request<ProviderModelsResponse>(`/api/admin/providers/models/${provider}`);
   }
 
   // Testing
-  async getTestingUsers(): Promise<TestingResponse> {
-    return this.request<TestingResponse>('/api/admin/testing/users');
+  async getTestingUsers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    details?: 'basic' | 'full';
+  }): Promise<TestingResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.details) queryParams.append('details', params.details);
+    
+    const url = `/api/admin/testing/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return this.request<TestingResponse>(url);
   }
 
   async getUserLLMConfig(subscriptionKey: string): Promise<TestingResponse> {
@@ -377,48 +587,57 @@ export class ApiService {
   }
 
   // Features
-  async getAvailableFeatures(): Promise<{ 
-    success: boolean; 
-    data?: Record<string, {
-      name: string;
-      display_name: string;
-      description: string;
-      category: string;
-    }>
-  }> {
-    return this.request('/api/admin/features/available');
+  async getAvailableFeatures(): Promise<AvailableFeaturesResponse> {
+    return this.request<AvailableFeaturesResponse>('/api/admin/features/available');
   }
 
   // Admin Prompts
-  async getSubscriptionPrompts(subscriptionKey: string): Promise<{ prompts: Record<string, string> }> {
-    return this.request(`/api/admin/prompts/${subscriptionKey}`);
+  async getSubscriptionPrompts(subscriptionKey: string): Promise<{ subscription_key: string; prompts: Record<string, string> }> {
+    return this.request<{ subscription_key: string; prompts: Record<string, string> }>(`/api/admin/prompts/${subscriptionKey}`);
   }
 
-  async updateSubscriptionPrompts(subscriptionKey: string, yamlContent: string): Promise<{ success: boolean; message?: string }> {
-    return this.request(`/api/admin/prompts/${subscriptionKey}/update`, {
+  async updateSubscriptionPrompts(subscriptionKey: string, yamlContent: string): Promise<{ status: string }> {
+    return this.request<{ status: string }>(`/api/admin/prompts/${subscriptionKey}/update`, {
       method: 'POST',
       body: JSON.stringify({ yaml_content: yamlContent })
     });
   }
 
-  async resetSubscriptionPrompts(subscriptionKey: string): Promise<{ success: boolean; message?: string }> {
-    return this.request(`/api/admin/prompts/${subscriptionKey}/reset`, { method: 'POST' });
+  async resetSubscriptionPrompts(subscriptionKey: string): Promise<{ status: string; subscription_key: string }> {
+    return this.request<{ status: string; subscription_key: string }>(`/api/admin/prompts/${subscriptionKey}/reset`, { method: 'POST' });
   }
 
-  async reloadSubscriptionPrompts(subscriptionKey: string): Promise<{ success: boolean; message?: string }> {
-    return this.request(`/api/admin/prompts/${subscriptionKey}/reload`, { method: 'POST' });
+  async resetSubscriptionPrompt(subscriptionKey: string, promptName: string): Promise<{ status: string; subscription_key: string; prompt_name: string }> {
+    return this.request<{ status: string; subscription_key: string; prompt_name: string }>(`/api/admin/prompts/${subscriptionKey}/reset/${promptName}`, { method: 'POST' });
   }
 
-  async downloadSubscriptionPrompts(subscriptionKey: string): Promise<{ yaml: string }> {
-    return this.request(`/api/admin/prompts/${subscriptionKey}/download`);
+  async reloadSubscriptionPrompts(subscriptionKey: string): Promise<{ status: string; ok: boolean }> {
+    return this.request<{ status: string; ok: boolean }>(`/api/admin/prompts/${subscriptionKey}/reload`, { method: 'POST' });
   }
 
-  async getSubscriptionFeatures(subscriptionKey: string): Promise<{ success: boolean; data?: Record<string, unknown> }> {
-    return this.request(`/api/admin/features/subscription/${subscriptionKey}`);
+
+  // Default Prompts Management
+  async getDefaultPrompts(): Promise<{ subscription_key: string; prompts: Record<string, string> }> {
+    return this.request<{ subscription_key: string; prompts: Record<string, string> }>('/api/admin/prompts/default');
   }
 
-  async getFeatureConfig(subscriptionKey: string, featureName: string): Promise<{ success: boolean; data?: unknown }> {
-    return this.request(`/api/admin/features/subscription/${subscriptionKey}/${featureName}`);
+  async updateDefaultPrompts(yamlContent: string): Promise<{ status: string; message: string }> {
+    return this.request<{ status: string; message: string }>('/api/admin/prompts/default/update', {
+      method: 'POST',
+      body: JSON.stringify({ yaml_content: yamlContent })
+    });
+  }
+
+  async resetDefaultPrompts(): Promise<{ status: string; message: string }> {
+    return this.request<{ status: string; message: string }>('/api/admin/prompts/default/reset', { method: 'POST' });
+  }
+
+  async getSubscriptionFeatures(subscriptionKey: string): Promise<{ success: boolean; subscription_key?: string; features?: Record<string, unknown> }> {
+    return this.request<{ success: boolean; subscription_key?: string; features?: Record<string, unknown> }>(`/api/admin/features/subscription/${subscriptionKey}`);
+  }
+
+  async getFeatureConfig(subscriptionKey: string, featureName: string): Promise<{ success: boolean; config?: unknown; error?: string }> {
+    return this.request<{ success: boolean; config?: unknown; error?: string }>(`/api/admin/features/subscription/${subscriptionKey}/${featureName}`);
   }
 
   async saveAndTestFeature(subscriptionKey: string, featureName: string, config: Record<string, unknown>): Promise<{ success: boolean; message?: string }> {
@@ -433,8 +652,8 @@ export class ApiService {
     subscription_key: string;
     feature_name: string;
     test_prompt?: string;
-  }): Promise<{ success: boolean; message?: string }> {
-    return this.request('/api/admin/features/test-llm', {
+  }): Promise<{ success: boolean; test_result?: unknown; error?: string; error_type?: string }> {
+    return this.request<{ success: boolean; test_result?: unknown; error?: string; error_type?: string }>('/api/admin/features/test-llm', {
       method: 'POST',
       body: JSON.stringify(data),
     });

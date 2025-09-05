@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { FiArrowLeft, FiShield } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLoginFlow } from '@/contexts/LoginFlowContext';
+import TextLoader from '@/components/TextLoader';
+import ThemeToggle from '@/components/ThemeToggle';
 
 
 export default function LoginPage() {
@@ -39,22 +41,41 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--background)' }}>
-      <div className="max-w-md w-full space-y-8">
-        {/* Back Button */}
-        <button
-          onClick={() => setLoginType('selector')}
-          className="absolute top-4 left-4 flex items-center space-x-2 text-sm transition-colors"
-          style={{ color: 'var(--foreground)', opacity: 0.7, zIndex: 10 }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '1';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '0.7';
-          }}
-        >
-          <FiArrowLeft />
-          <span>Back to login selection</span>
-        </button>
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'var(--background)' }}>
+          <TextLoader />
+        </div>
+      )}
+      <div className="max-w-md w-full space-y-8 relative">
+        <div className="fixed top-4 left-4">
+          <button
+            onClick={() => setLoginType('selector')}
+            className="flex items-center space-x-2 text-sm transition-colors"
+            style={{ color: 'var(--foreground)', opacity: 0.7 }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.7'; }}
+          >
+            <FiArrowLeft />
+            <span>Back</span>
+          </button>
+        </div>
+        <div className="fixed top-4 right-4">
+          <ThemeToggle />
+        </div>
+        {/* Back/Button header is fixed at the page corners above; remove in-card duplicates */}
+        <div className="hidden">
+          <button
+            onClick={() => setLoginType('selector')}
+            className="flex items-center space-x-2 text-sm transition-colors"
+            style={{ color: 'var(--foreground)', opacity: 0.7 }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.7'; }}
+          >
+            <FiArrowLeft />
+            <span>Back</span>
+          </button>
+          <ThemeToggle />
+        </div>
 
         <div className="text-center">
           <div 

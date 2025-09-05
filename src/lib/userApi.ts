@@ -1,4 +1,10 @@
 import { ApiError } from './api';
+
+const _ENV_BASE_URL: string | undefined = process.env.NEXT_PUBLIC_API_BASE_URL as unknown as string | undefined;
+if (!_ENV_BASE_URL) {
+  throw new Error('NEXT_PUBLIC_API_BASE_URL is required. Set it in your environment (e.g., .env.local)');
+}
+const USER_API_BASE_URL = _ENV_BASE_URL.replace(/\/$/, '');
 import { userAuthEvents } from '@/contexts/userAuthEvents';
 
 
@@ -37,6 +43,33 @@ interface FeatureConfig {
 }
 
 class UserApiService {
+  async getIntegrationStatus(token: string): Promise<{ success: boolean; zendesk_configured: boolean; confluence_configured: boolean; message: string }> {
+    const response = await fetch(this.base('/api/user/integrations/status'), {
+      headers: this.getAuthHeaders(token)
+    });
+    return this.handleResponse(response);
+  }
+
+  async saveUserZendeskCreds(token: string, data: { zendesk_email: string; zendesk_api_token: string; zendesk_subdomain?: string }): Promise<{ success: boolean }> {
+    const response = await fetch(this.base('/api/user/integrations/zendesk/save'), {
+      method: 'POST',
+      headers: this.getAuthHeaders(token),
+      body: JSON.stringify(data)
+    });
+    return this.handleResponse(response);
+  }
+
+  async saveUserConfluenceCreds(token: string, data: { confluence_base_url: string; confluence_username: string; confluence_api_token: string }): Promise<{ success: boolean }> {
+    const response = await fetch(this.base('/api/user/integrations/confluence/save'), {
+      method: 'POST',
+      headers: this.getAuthHeaders(token),
+      body: JSON.stringify(data)
+    });
+    return this.handleResponse(response);
+  }
+
+  private base(path: string) { return `${USER_API_BASE_URL}${path}`; }
+
   private getAuthHeaders(token: string) {
     return {
       'Authorization': `Bearer ${token}`,
@@ -81,7 +114,7 @@ class UserApiService {
   }
 
   async login(email: string, subscriptionKey: string): Promise<UserLoginResponse> {
-    const response = await fetch('/api/user/login', {
+    const response = await fetch(this.base('/api/user/login'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -95,8 +128,17 @@ class UserApiService {
     return this.handleResponse(response);
   }
 
+  async refreshAccessToken(refreshToken: string) {
+    const response = await fetch(this.base('/api/user/refresh-token'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+    return this.handleResponse(response);
+  }
+
   async getProfile(token: string) {
-    const response = await fetch('/api/user/profile', {
+    const response = await fetch(this.base('/api/user/profile'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -104,7 +146,7 @@ class UserApiService {
   }
 
   async getSubscription(token: string) {
-    const response = await fetch('/api/user/subscription', {
+    const response = await fetch(this.base('/api/user/subscription'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -112,7 +154,7 @@ class UserApiService {
   }
 
   async getFeatures(token: string) {
-    const response = await fetch('/api/user/features', {
+    const response = await fetch(this.base('/api/user/features'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -120,7 +162,7 @@ class UserApiService {
   }
 
   async getFeatureConfig(token: string, featureName: string) {
-    const response = await fetch(`/api/user/features/${featureName}`, {
+    const response = await fetch(this.base(`/api/user/features/${featureName}`), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -128,7 +170,7 @@ class UserApiService {
   }
 
   async updateFeatureConfig(token: string, featureName: string, config: FeatureConfig) {
-    const response = await fetch(`/api/user/features/${featureName}`, {
+    const response = await fetch(this.base(`/api/user/features/${featureName}`), {
       method: 'PUT',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify(config)
@@ -138,7 +180,7 @@ class UserApiService {
   }
 
   async saveAndTestFeature(token: string, featureName: string, config: FeatureConfig) {
-    const response = await fetch(`/api/user/features/${featureName}/save-and-test`, {
+    const response = await fetch(this.base(`/api/user/features/${featureName}/save-and-test`), {
       method: 'PUT',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify(config)
@@ -148,7 +190,7 @@ class UserApiService {
   }
 
   async testFeatureLLM(token: string, featureName: string, testPrompt?: string) {
-    const response = await fetch(`/api/user/features/${featureName}/test`, {
+    const response = await fetch(this.base(`/api/user/features/${featureName}/test`), {
       method: 'POST',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify({
@@ -160,7 +202,7 @@ class UserApiService {
   }
 
   async getAvailableFeatures(token: string) {
-    const response = await fetch('/api/user/features/available', {
+    const response = await fetch(this.base('/api/user/features/available'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -168,7 +210,7 @@ class UserApiService {
   }
 
   async getProviders(token: string) {
-    const response = await fetch('/api/user/providers', {
+    const response = await fetch(this.base('/api/user/providers'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -176,7 +218,7 @@ class UserApiService {
   }
 
   async getProviderDetails(token: string, providerName: string) {
-    const response = await fetch(`/api/user/providers/${providerName}`, {
+    const response = await fetch(this.base(`/api/user/providers/${providerName}`), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -190,7 +232,7 @@ class UserApiService {
     api_key: string;
     test_prompt?: string;
   }) {
-    const response = await fetch('/api/user/test-llm-config', {
+    const response = await fetch(this.base('/api/user/test-llm-config'), {
       method: 'POST',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify(config)
@@ -204,7 +246,7 @@ class UserApiService {
     endpoint: string;
     api_key: string;
   }) {
-    const response = await fetch('/api/user/test-provider-connection', {
+    const response = await fetch(this.base('/api/user/test-provider-connection'), {
       method: 'POST',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify(config)
@@ -214,7 +256,7 @@ class UserApiService {
   }
 
   async getSubscriptionLLMConfig(token: string) {
-    const response = await fetch('/api/user/subscription/llm-config', {
+    const response = await fetch(this.base('/api/user/subscription/llm-config'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -222,7 +264,7 @@ class UserApiService {
   }
 
   async testSubscriptionLLM(token: string, options: { llm_type?: 'main' | 'fallback' | 'both'; test_prompt?: string } = {}) {
-    const response = await fetch('/api/user/testing/test-llm', {
+    const response = await fetch(this.base('/api/user/testing/test-llm'), {
       method: 'POST',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify({
@@ -235,7 +277,7 @@ class UserApiService {
   }
 
   async bulkUpdateFeatures(token: string, features: Record<string, FeatureConfig>) {
-    const response = await fetch('/api/user/features/bulk-update', {
+    const response = await fetch(this.base('/api/user/features/bulk-update'), {
       method: 'POST',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify({
@@ -247,7 +289,7 @@ class UserApiService {
   }
 
   async verifyToken(token: string) {
-    const response = await fetch('/api/user/verify-token', {
+    const response = await fetch(this.base('/api/user/verify-token'), {
       headers: this.getAuthHeaders(token)
     });
 
@@ -258,7 +300,7 @@ class UserApiService {
     main_llm: LLMConfig;
     fallback_llm: LLMConfig;
   }) {
-    const response = await fetch('/api/user/subscription/llm-config', {
+    const response = await fetch(this.base('/api/user/subscription/llm-config'), {
       method: 'PUT',
       headers: this.getAuthHeaders(token),
       body: JSON.stringify(config)
@@ -268,7 +310,7 @@ class UserApiService {
   }
 
   async logout(token: string) {
-    const response = await fetch('/api/user/logout', {
+    const response = await fetch(this.base('/api/user/logout'), {
       method: 'POST',
       headers: this.getAuthHeaders(token)
     });

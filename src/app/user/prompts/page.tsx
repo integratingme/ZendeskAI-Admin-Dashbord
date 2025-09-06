@@ -179,9 +179,9 @@ export default function UserPrompts() {
           <div className="flex-shrink-0 mt-0.5"><FiAlertTriangle /></div>
           <div>
             <div className="font-semibold" style={{ color: 'var(--foreground)' }}>Important</div>
-            <div className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.85 }}>
-              Do not modify Output format field names or structure (e.g., <code>smart_summary</code>, <code>display_text</code>, <code>summary_reasoning</code>, <code>main_issue</code>, <code>key_metrics.customer_sentiment</code>, <code>confidence_score</code>). You may change descriptive text (like word counts), but renaming or removing keys can break parsing.<br/>
-              Context caution: Modify the <strong>Context</strong> section at your own risk — it controls how ticket and related data are analyzed by the LLM.
+            <div className="text-sm space-y-3" style={{ color: 'var(--foreground)', opacity: 0.85 }}>
+              <p>Do not modify Output format field names or structure (e.g., <code>smart_summary</code>, <code>display_text</code>, <code>summary_reasoning</code>, <code>main_issue</code>, <code>key_metrics.customer_sentiment</code>, <code>confidence_score</code>). You may change descriptive text (like word counts), but renaming or removing keys can break parsing.</p>
+              <p><strong>Context caution:</strong> Modify the <strong>Context</strong> section at your own risk — it controls how ticket and related data are analyzed by the LLM.</p>
             </div>
           </div>
         </div>
@@ -229,16 +229,16 @@ export default function UserPrompts() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-           <button onClick={save} disabled={saving} className="admin-button px-4 py-2 rounded-lg">
-             {saving ? 'Saving...' : 'Save'}
-           </button>
-           <button onClick={resetAll} disabled={resettingAll} className="admin-button-outline px-4 py-2 rounded-lg">
-             {resettingAll ? 'Resetting...' : 'Restore All'}
-           </button>
-           <button onClick={resetSelected} disabled={resettingSelected || !selectedFeature} className="admin-button-outline px-4 py-2 rounded-lg">
-             {resettingSelected ? 'Resetting...' : 'Restore Selected'}
-           </button>
-         </div>
+            <button onClick={save} disabled={saving} className="admin-button px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base">
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button onClick={resetAll} disabled={resettingAll} className="admin-button-outline px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base">
+              {resettingAll ? 'Resetting...' : 'Restore All'}
+            </button>
+            <button onClick={resetSelected} disabled={resettingSelected || !selectedFeature} className="admin-button-outline px-2 py-1 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base">
+              {resettingSelected ? 'Resetting...' : 'Restore Selected'}
+            </button>
+          </div>
        </div>
  
        {/* Save Confirmation Modal */}

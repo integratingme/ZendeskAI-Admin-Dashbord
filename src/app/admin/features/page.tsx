@@ -6,9 +6,9 @@ import { useToastContext } from '@/contexts/ToastContext';
 import {
   FiSettings,
   FiX,
-  FiSearch,
-  FiRefreshCw
+  FiSearch
 } from 'react-icons/fi';
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import ThemedSelect from '@/components/ThemedSelect';
 
 interface LLMConfig {
@@ -80,6 +80,7 @@ export default function AdminFeaturesPage() {
    const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
    const [showFeatureConfigModal, setShowFeatureConfigModal] = useState(false);
    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+   const [originalFeatureConfig, setOriginalFeatureConfig] = useState<FeatureConfig | null>(null);
    const [updating, setUpdating] = useState<string | null>(null);
    const [saving, setSaving] = useState(false);
    const [searchTerm, setSearchTerm] = useState('');
@@ -345,6 +346,11 @@ export default function AdminFeaturesPage() {
   };
 
   const handleConfigureFeature = (featureName: string) => {
+    // Take a deep copy snapshot so we can revert unsaved changes on close
+    const snapshot = subscriptionFeatures[featureName]
+      ? (JSON.parse(JSON.stringify(subscriptionFeatures[featureName])) as FeatureConfig)
+      : null;
+    setOriginalFeatureConfig(snapshot);
     setSelectedFeature(featureName);
     setShowFeatureConfigModal(true);
     setHasUnsavedChanges(false);
@@ -461,7 +467,7 @@ export default function AdminFeaturesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-          {viewMode === 'list' ? 'Feature Control' : 'Feature Control'}
+          Features
         </h1>
         {viewMode === 'details' && (
           <button
@@ -476,46 +482,94 @@ export default function AdminFeaturesPage() {
       {/* List View */}
       {viewMode === 'list' && (
         <div className="admin-card p-6 transition-all duration-300 ease-in-out">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div>
+        <div className="space-y-4 mb-4">
+          {/* Mobile Layout - Search Full Width */}
+          <div className="block sm:hidden">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center border rounded-lg flex-1" style={{ borderColor: 'var(--border)' }}>
+                <input
+                  type="text"
+                  placeholder="Search subscriptions..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none flex-1"
+                  style={{ color: 'var(--foreground)', background: 'transparent' }}
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-3 py-2 border-l text-sm hover:bg-gray-50 flex-shrink-0"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Search"
+                >
+                  <FiSearch className="w-4 h-4" />
+                </button>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 flex-shrink-0"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Clear search"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Layout - Title and Search */}
+          <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Select Subscription for Features</h3>
+              {searchTerm && (
+                <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                  Filtered by: {`"${searchTerm}"`}
+                </p>
+              )}
+            </div>
+
+            {/* Search */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
+                <input
+                  type="text"
+                  placeholder="Search subscriptions..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none w-full sm:w-auto"
+                  style={{ color: 'var(--foreground)', background: 'transparent' }}
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-3 py-2 border-l text-sm hover:bg-gray-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Search"
+                >
+                  <FiSearch className="w-4 h-4" />
+                </button>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Clear search"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Title and Filter Info */}
+          <div className="block sm:hidden">
             <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Select Subscription for Features</h3>
             {searchTerm && (
               <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
                 Filtered by: {`"${searchTerm}"`}
               </p>
-            )}
-          </div>
-
-          {/* Search */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
-              <input
-                type="text"
-                placeholder="Search subscriptions..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyPress={handleSearchKeyPress}
-                className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none"
-                style={{ color: 'var(--foreground)', background: 'transparent' }}
-              />
-              <button
-                onClick={handleSearch}
-                className="px-3 py-2 border-l text-sm hover:bg-gray-50"
-                style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                title="Search"
-              >
-                <FiSearch className="w-4 h-4" />
-              </button>
-            </div>
-            {searchTerm && (
-              <button
-                onClick={handleClearSearch}
-                className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
-                style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                title="Clear search"
-              >
-                Clear
-              </button>
             )}
           </div>
         </div>
@@ -553,7 +607,7 @@ export default function AdminFeaturesPage() {
                 {currentSubscriptions.map((subscription) => (
                   <div
                     key={subscription.subscription_key}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <div>
@@ -566,7 +620,7 @@ export default function AdminFeaturesPage() {
                     </div>
                     <button
                       onClick={() => handleViewFeatures(subscription.subscription_key)}
-                      className="admin-button px-4 py-2 rounded-lg flex items-center gap-2"
+                      className="admin-button px-1 py-0.5 sm:px-4 sm:py-2 rounded text-xs sm:text-sm flex items-center gap-0.5 sm:gap-2 w-fit"
                     >
                       View Features
                     </button>
@@ -575,27 +629,27 @@ export default function AdminFeaturesPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && !searchTerm && (
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="admin-button-outline px-4 py-2 rounded-lg disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-
-                    <div className="text-sm text-gray-600">
-                      Page {currentPage} of {totalPages} ({totalCount} total subscriptions)
+                  <div className="pagination-container flex flex-row items-center justify-center gap-2 mt-6" style={{ borderColor: 'var(--border)' }}>
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="admin-button-outline px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base flex-shrink-0"
+                      >
+                        <LuChevronLeft />
+                      </button>
+ 
+                      <div className="text-xs sm:text-sm text-gray-600 text-center flex-1 min-w-0">
+                        Page {currentPage} of {totalPages} ({totalCount} total subscriptions)
+                      </div>
+ 
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="admin-button-outline px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg disabled:opacity-50 text-sm sm:text-base flex-shrink-0"
+                      >
+                        <LuChevronRight />
+                      </button>
                     </div>
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="admin-button-outline px-4 py-2 rounded-lg disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
                 )}
               </div>
             )}
@@ -676,13 +730,13 @@ export default function AdminFeaturesPage() {
                     .map(([featureName, config]) => (
                   <div
                     key={featureName}
-                    className="flex items-center justify-between p-3 rounded-lg border"
+                    className="p-3 rounded-lg border feature-item-mobile sm:flex sm:items-center sm:justify-between"
                     style={{
                       background: 'var(--background)',
                       border: '1px solid var(--accent)'
                     }}
                   >
-                    <div className="flex-1">
+                    <div className="mb-3 sm:mb-0 sm:flex-1">
                       <h4 className="font-medium" style={{ color: 'var(--foreground)' }}>
                         {availableFeatures[featureName]?.display_name || featureName}
                       </h4>
@@ -690,12 +744,12 @@ export default function AdminFeaturesPage() {
                         {availableFeatures[featureName]?.description || 'Feature description'}
                       </p>
                       {config.use_custom_llm && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 mt-1 inline-block">
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 mt-1 inline-block custom-llm-badge">
                           Custom LLM
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 feature-controls sm:flex-shrink-0">
                       <button
                         onClick={() => handleConfigureFeature(featureName)}
                         className="p-2 rounded-lg transition-colors"
@@ -719,9 +773,6 @@ export default function AdminFeaturesPage() {
                         <div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" style={{ backgroundColor: 'var(--accent)' }}>
                           <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6" />
                         </div>
-                        <span className="ml-3 text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                          {updating === featureName ? 'Updating...' : 'Enabled'}
-                        </span>
                       </label>
                     </div>
                   </div>
@@ -740,14 +791,14 @@ export default function AdminFeaturesPage() {
                 .map(([featureName, config]) => (
                   <div
                     key={featureName}
-                    className="flex items-center justify-between p-3 rounded-lg border"
+                    className="p-3 rounded-lg border feature-item-mobile sm:flex sm:items-center sm:justify-between"
                     style={{
                       background: 'var(--background)',
                       border: '1px solid var(--border)',
                       opacity: 0.7
                     }}
                   >
-                    <div className="flex-1">
+                    <div className="mb-3 sm:mb-0 sm:flex-1">
                       <h4 className="font-medium" style={{ color: 'var(--foreground)' }}>
                         {availableFeatures[featureName]?.display_name || featureName}
                       </h4>
@@ -755,12 +806,12 @@ export default function AdminFeaturesPage() {
                         {availableFeatures[featureName]?.description || 'Feature description'}
                       </p>
                       {config.use_custom_llm && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 mt-1 inline-block">
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 mt-1 inline-block custom-llm-badge">
                           Custom LLM
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 feature-controls sm:flex-shrink-0">
                       <button
                         onClick={() => handleConfigureFeature(featureName)}
                         className="p-2 rounded-lg transition-colors"
@@ -784,9 +835,6 @@ export default function AdminFeaturesPage() {
                         <div className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors" style={{ backgroundColor: '#d1d5db' }}>
                           <span className="inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-1" />
                         </div>
-                        <span className="ml-3 text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                          {updating === featureName ? 'Updating...' : 'Disabled'}
-                        </span>
                       </label>
                     </div>
                   </div>
@@ -801,8 +849,8 @@ export default function AdminFeaturesPage() {
 
       {/* Feature LLM Configuration Modal */}
       {showFeatureConfigModal && selectedFeature && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll" style={{ background: 'var(--card-bg)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4" style={{ background: 'var(--modal-overlay)' }}>
+          <div className="feature-config-modal rounded-lg p-3 sm:p-6 w-full max-w-sm sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto themed-scroll" style={{ background: 'var(--card-bg)' }}>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold" style={{ color: 'var(--foreground)' }}>
@@ -814,9 +862,17 @@ export default function AdminFeaturesPage() {
               </div>
               <button 
                 onClick={() => {
+                  // If there are unsaved changes, revert to original snapshot
+                  if (hasUnsavedChanges && selectedFeature && originalFeatureConfig) {
+                    setSubscriptionFeatures(prev => ({
+                      ...prev,
+                      [selectedFeature]: originalFeatureConfig
+                    }));
+                  }
                   setShowFeatureConfigModal(false);
                   setSelectedFeature(null);
                   setHasUnsavedChanges(false);
+                  setOriginalFeatureConfig(null);
                 }}
                 className="transition-colors"
                 style={{ color: 'var(--foreground)', opacity: 0.5 }}
@@ -837,41 +893,46 @@ export default function AdminFeaturesPage() {
                 <div>
                   {/* Custom LLM Configuration */}
                   <div className="p-4 rounded-lg" style={{ background: 'var(--background)', border: '1px solid var(--border)' }}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="font-medium" style={{ color: 'var(--foreground)' }}>Custom LLM Configuration</h4>
-                        <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
-                          Use custom LLM for this feature instead of subscription defaults
-                        </p>
-                      </div>
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={subscriptionFeatures[selectedFeature].use_custom_llm}
-                          onChange={(e) => {
-                            const currentConfig = subscriptionFeatures[selectedFeature];
-                            const updatedConfig = { ...currentConfig, use_custom_llm: e.target.checked };
-                            setSubscriptionFeatures(prev => ({
-                              ...prev,
-                              [selectedFeature]: updatedConfig as FeatureConfig
-                            }));
-                            // Mark as having unsaved changes
-                            setHasUnsavedChanges(true);
-                          }}
-                          className="sr-only"
-                        />
-                        <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
-                             style={{
-                               backgroundColor: subscriptionFeatures[selectedFeature].use_custom_llm ? 'var(--accent)' : '#d1d5db'
-                             }}>
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            subscriptionFeatures[selectedFeature].use_custom_llm ? 'translate-x-6' : 'translate-x-1'
-                          }`} />
+                    <div className="mb-4">
+                      <h4 className="font-medium" style={{ color: 'var(--foreground)' }}>Custom LLM Configuration</h4>
+                      <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                        Use custom LLM for this feature instead of subscription defaults
+                      </p>
+
+                      <div className="mt-3 p-2 rounded-lg max-w-full overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h5 className="font-medium text-xs truncate" style={{ color: 'var(--foreground)' }}>LLM Mode</h5>
+                          </div>
+                          <label className="flex items-center cursor-pointer gap-1.5 flex-shrink-0">
+                            <input
+                              type="checkbox"
+                              checked={subscriptionFeatures[selectedFeature].use_custom_llm}
+                              onChange={(e) => {
+                                const currentConfig = subscriptionFeatures[selectedFeature];
+                                const updatedConfig = { ...currentConfig, use_custom_llm: e.target.checked } as FeatureConfig;
+                                setSubscriptionFeatures(prev => ({
+                                  ...prev,
+                                  [selectedFeature]: updatedConfig
+                                }));
+                                setHasUnsavedChanges(true);
+                              }}
+                              className="sr-only"
+                            />
+                            <div className={`relative inline-flex h-5 w-8 items-center rounded-full transition-colors flex-shrink-0`}
+                                 style={{
+                                   backgroundColor: subscriptionFeatures[selectedFeature].use_custom_llm ? 'var(--accent)' : '#d1d5db'
+                                 }}>
+                              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                subscriptionFeatures[selectedFeature].use_custom_llm ? 'translate-x-4' : 'translate-x-0.5'
+                              }`} />
+                            </div>
+                            <span className="text-xs font-medium whitespace-nowrap" style={{ color: 'var(--foreground)' }}>
+                              {subscriptionFeatures[selectedFeature].use_custom_llm ? 'Custom' : 'Default'}
+                            </span>
+                          </label>
                         </div>
-                        <span className="ml-3 text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                          {subscriptionFeatures[selectedFeature].use_custom_llm ? 'Custom LLM' : 'Default LLM'}
-                        </span>
-                      </label>
+                      </div>
                     </div>
 
                     {subscriptionFeatures[selectedFeature].use_custom_llm && (
@@ -879,7 +940,7 @@ export default function AdminFeaturesPage() {
                         {/* Main LLM Configuration */}
                         <div>
                           <h5 className="font-medium mb-3" style={{ color: 'var(--foreground)' }}>Main LLM</h5>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-3">
                             <div>
                               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                                 Provider
@@ -1093,7 +1154,7 @@ export default function AdminFeaturesPage() {
                         {/* Fallback LLM Configuration */}
                         <div>
                           <h5 className="font-medium mb-3" style={{ color: 'var(--foreground)' }}>Fallback LLM</h5>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 gap-3">
                             <div>
                               <label className="block text-sm font-medium mb-2" style={{ color: 'var(--foreground)' }}>
                                 Provider
@@ -1307,38 +1368,41 @@ export default function AdminFeaturesPage() {
                       </div>
                     )}
                     
-                    {/* Save Button - Show when custom LLM is enabled or when there are changes */}
-                    {(subscriptionFeatures[selectedFeature].use_custom_llm || hasUnsavedChanges) && (
-                      <div className="flex justify-end pt-4 mt-6">
-                        <button
-                          onClick={() => handleSaveFeatureConfig(subscriptionFeatures[selectedFeature])}
-                          disabled={!isFeatureConfigValid(subscriptionFeatures[selectedFeature]) || saving}
-                          className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
-                            (!isFeatureConfigValid(subscriptionFeatures[selectedFeature]) || saving)
-                              ? 'opacity-50 cursor-not-allowed'
-                              : ''
-                          }`}
-                          style={{
-                            background: 'var(--accent)',
-                            color: 'white',
-                            border: 'none'
-                          }}
-                          aria-busy={saving}
-                          aria-live="polite"
-                          title={!isFeatureConfigValid(subscriptionFeatures[selectedFeature])
-                            ? 'Please fill in all required fields (Provider, Model, API Key for both LLMs)'
-                            : 'Save Configuration'
-                          }
-                        >
-                          {saving ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                              <span>Saving…</span>
-                            </>
-                          ) : (
-                            <span>Save Configuration</span>
-                          )}
-                        </button>
+                    {/* Save Button */}
+                    {subscriptionFeatures[selectedFeature]?.use_custom_llm && (
+                      <div className="pt-4 mt-6 space-y-4">
+                        {/* Save Button */}
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleSaveFeatureConfig(subscriptionFeatures[selectedFeature])}
+                            disabled={!isFeatureConfigValid(subscriptionFeatures[selectedFeature]) || saving}
+                            className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
+                              (!isFeatureConfigValid(subscriptionFeatures[selectedFeature]) || saving)
+                                ? 'opacity-50 cursor-not-allowed'
+                                : ''
+                            }`}
+                            style={{
+                              background: 'var(--accent)',
+                              color: 'white',
+                              border: 'none'
+                            }}
+                            aria-busy={saving}
+                            aria-live="polite"
+                            title={!isFeatureConfigValid(subscriptionFeatures[selectedFeature])
+                              ? 'Please fill in all required fields (Provider, Model, API Key for both LLMs)'
+                              : 'Save Configuration'
+                            }
+                          >
+                            {saving ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                                <span>Saving…</span>
+                              </>
+                            ) : (
+                              <span>Save Configuration</span>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1349,6 +1413,48 @@ export default function AdminFeaturesPage() {
         </div>
       )}
     </div>
+      <style jsx>{`
+        @media (max-width: 640px) {
+          .feature-config-modal input[type="text"],
+          .feature-config-modal input[type="password"],
+          .feature-config-modal input[type="url"],
+          .feature-config-modal input[type="number"],
+          .feature-config-modal select,
+          .feature-config-modal textarea {
+            padding: 0.5rem; /* p-2 */
+            font-size: 0.875rem; /* text-sm */
+            border-radius: 0.5rem; /* rounded-lg */
+          }
+          .feature-config-modal label { font-size: 0.85rem; }
+          .feature-config-modal h2 { font-size: 1rem; }
+          .feature-config-modal h4 { font-size: 0.95rem; }
+          .feature-config-modal h5 { font-size: 0.875rem; }
+          .feature-config-modal button {
+            padding: 0.4rem 0.75rem; /* smaller buttons */
+            font-size: 0.875rem;
+          }
+
+          /* Sleek feature boxes for mobile */
+          .feature-item-mobile {
+            padding: 0.75rem !important; /* p-3 to p-3 but more compact */
+          }
+          .feature-item-mobile h4 {
+            font-size: 0.9rem !important; /* Slightly smaller headings */
+            font-weight: 500 !important;
+          }
+          .feature-item-mobile p {
+            font-size: 0.8rem !important; /* Smaller description text */
+            line-height: 1.3 !important;
+          }
+          .feature-item-mobile .custom-llm-badge {
+            font-size: 0.7rem !important; /* Smaller badge text */
+            padding: 0.2rem 0.5rem !important;
+          }
+          .feature-item-mobile .feature-controls {
+            margin-top: 0.5rem !important; /* Less space between content and controls */
+          }
+        }
+      `}</style>
     </AdminLayout>
   );
 }

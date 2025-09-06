@@ -160,6 +160,11 @@ body {
 .hover\:bg-gray-50:hover * {
   color: var(--foreground) !important;
 }
+/* Preserve contrast for primary action buttons on hover rows */
+.hover\:bg-gray-50:hover .admin-button,
+.hover\:bg-gray-50:hover .admin-button * {
+  color: #ffffff !important;
+}
 
 .text-gray-500 {
   color: var(--foreground) !important;

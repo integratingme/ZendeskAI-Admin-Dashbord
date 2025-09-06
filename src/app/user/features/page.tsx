@@ -615,29 +615,32 @@ function FeatureConfigModal({
           )}
           {/* Custom LLM Configuration */}
           <div className="p-4 rounded-lg" style={{ background: 'var(--background)', border: '1px solid var(--border)' }}>
-            <label className="flex items-center justify-between cursor-pointer mb-4">
+            <label className="flex items-start sm:items-center justify-between gap-3 cursor-pointer mb-4 flex-wrap">
               <div>
                 <h4 className="font-medium" style={{ color: 'var(--foreground)' }}>Custom LLM Configuration</h4>
                 <p className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
                   Use custom LLM for this feature instead of subscription defaults
                 </p>
               </div>
-              <input
-                type="checkbox"
-                checked={config.use_custom_llm}
-                onChange={(e) => setConfig({ ...config, use_custom_llm: e.target.checked })}
-                className="sr-only"
-                disabled={!config.is_enabled}
-              />
-              <div 
-                className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-                style={{ backgroundColor: !config.is_enabled ? '#e5e7eb' : (config.use_custom_llm ? 'var(--accent)' : '#d1d5db'), opacity: !config.is_enabled ? 0.6 : 1 }}
-              >
-                <span 
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    config.use_custom_llm ? 'translate-x-6' : 'translate-x-1'
-                  }`} 
+              <div className="flex items-center gap-2 sm:gap-3">
+                <input
+                  type="checkbox"
+                  checked={config.use_custom_llm}
+                  onChange={(e) => setConfig({ ...config, use_custom_llm: e.target.checked })}
+                  className="sr-only"
+                  disabled={!config.is_enabled}
+                  id="toggle-custom-llm"
                 />
+                <div 
+                  className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0"
+                  style={{ backgroundColor: !config.is_enabled ? '#e5e7eb' : (config.use_custom_llm ? 'var(--accent)' : '#d1d5db'), opacity: !config.is_enabled ? 0.6 : 1 }}
+                >
+                  <span 
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      config.use_custom_llm ? 'translate-x-6' : 'translate-x-1'
+                    }`} 
+                  />
+                </div>
               </div>
             </label>
 
@@ -982,35 +985,37 @@ function FeatureConfigModal({
             )}
             
             {/* Test and Save Buttons */}
-            <div className="flex justify-end pt-4 mt-6">
-              <button
-                onClick={handleSave}
-                disabled={!config.is_enabled || !isFeatureConfigValid(config) || saving}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${(!config.is_enabled || !isFeatureConfigValid(config) || saving) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                style={{
-                  background: 'var(--accent)',
-                  color: 'white',
-                  border: 'none'
-                }}
-                aria-busy={saving}
-                aria-live="polite"
-                title={!config.is_enabled
-                  ? 'This feature is disabled by admin'
-                  : !isFeatureConfigValid(config)
-                    ? 'Please fill in all required fields (Provider, Model, API Key for both LLMs)'
-                    : 'Save Configuration'
-                }
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    <span>Saving…</span>
-                  </>
-                ) : (
-                  <span>Save Configuration</span>
-                )}
-              </button>
-            </div>
+            {(config.use_custom_llm || (feature.use_custom_llm && !config.use_custom_llm)) && (
+              <div className="flex justify-end pt-4 mt-6">
+                <button
+                  onClick={handleSave}
+                  disabled={!config.is_enabled || !isFeatureConfigValid(config) || saving}
+                  className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${(!config.is_enabled || !isFeatureConfigValid(config) || saving) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  style={{
+                    background: 'var(--accent)',
+                    color: 'white',
+                    border: 'none'
+                  }}
+                  aria-busy={saving}
+                  aria-live="polite"
+                  title={!config.is_enabled
+                    ? 'This feature is disabled by admin'
+                    : !isFeatureConfigValid(config)
+                      ? 'Please fill in all required fields (Provider, Model, API Key for both LLMs)'
+                      : 'Save'
+                  }
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Saving…</span>
+                    </>
+                  ) : (
+                    <span>Save</span>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

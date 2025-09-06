@@ -154,6 +154,70 @@ export default function AdminOverviewPage() {
             </div>
           </div>
         </div>
+  
+        <style jsx>{`
+          @media (max-width: 640px) {
+            /* Sleek overview cards for mobile */
+            .overview-card-mobile {
+              padding: 1rem !important; /* p-4 instead of p-6 */
+            }
+  
+            .overview-card-mobile h3 {
+              font-size: 0.85rem !important; /* Smaller card titles */
+              font-weight: 500 !important;
+            }
+  
+            .overview-card-mobile .metric-value {
+              font-size: 1.5rem !important; /* Smaller metric numbers */
+              font-weight: 600 !important;
+            }
+  
+            .overview-card-mobile .metric-label {
+              font-size: 0.75rem !important; /* Smaller metric labels */
+            }
+  
+            /* Compact grid spacing */
+            .overview-grid-mobile {
+              gap: 1rem !important; /* Smaller gaps between cards */
+            }
+  
+            /* Smaller section headings */
+            .overview-section-mobile h3 {
+              font-size: 1rem !important; /* Smaller section titles */
+              font-weight: 600 !important;
+              margin-bottom: 0.75rem !important;
+            }
+  
+            /* Compact subscription breakdown */
+            .subscription-breakdown-mobile .text-2xl {
+              font-size: 1.25rem !important; /* Smaller numbers */
+              font-weight: 600 !important;
+            }
+  
+            .subscription-breakdown-mobile .text-sm {
+              font-size: 0.7rem !important; /* Smaller labels */
+            }
+  
+            /* Compact provider usage */
+            .provider-usage-mobile .font-medium {
+              font-size: 0.85rem !important; /* Smaller provider names */
+            }
+  
+            .provider-usage-mobile .text-sm {
+              font-size: 0.75rem !important; /* Smaller usage text */
+            }
+  
+            /* Compact system health */
+            .system-health-mobile .text-gray-600 {
+              font-size: 0.8rem !important; /* Smaller labels */
+            }
+  
+            .system-health-mobile .px-2 {
+              padding: 0.25rem 0.5rem !important; /* Smaller status badges */
+              font-size: 0.7rem !important;
+            }
+          }
+        `}</style>
       </AdminLayout>
     );
   }
@@ -194,73 +258,55 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="admin-card p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 overview-grid-mobile">
+        <div className="admin-card p-6 overview-card-mobile">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Subscriptions</h3>
-              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>{stats.total_subscriptions || 0}</p>
+              <h3 className="text-sm font-medium metric-label" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Subscriptions</h3>
+              <p className="text-3xl font-bold mt-2 metric-value" style={{ color: 'var(--foreground)' }}>{stats.total_subscriptions || 0}</p>
             </div>
             <FiUsers className="text-2xl text-gray-400" />
           </div>
         </div>
-        
-        <div className="admin-card p-6">
+
+        <div className="admin-card p-6 overview-card-mobile">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Cost</h3>
-              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>${stats.total_cost_usd?.toFixed(2) || '0.00'}</p>
+              <h3 className="text-sm font-medium metric-label" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Cost</h3>
+              <p className="text-3xl font-bold mt-2 metric-value" style={{ color: 'var(--foreground)' }}>${stats.total_cost_usd?.toFixed(2) || '0.00'}</p>
             </div>
             <FiDollarSign className="text-2xl text-gray-400" />
           </div>
         </div>
-        
-        <div className="admin-card p-6">
+
+        <div className="admin-card p-6 overview-card-mobile">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Requests</h3>
-              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>{stats.total_requests?.toLocaleString() || '0'}</p>
+              <h3 className="text-sm font-medium metric-label" style={{ color: 'var(--foreground)', opacity: 0.7 }}>Total Requests</h3>
+              <p className="text-3xl font-bold mt-2 metric-value" style={{ color: 'var(--foreground)' }}>{stats.total_requests?.toLocaleString() || '0'}</p>
             </div>
             <FiActivity className="text-2xl text-gray-400" />
           </div>
         </div>
-        
-        <div className="admin-card p-6">
+
+        <div className="admin-card p-6 overview-card-mobile">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-medium text-gray-600">Avg Cost/Sub</h3>
-              <p className="text-3xl font-bold mt-2" style={{ color: 'var(--foreground)' }}>${stats.average_cost_per_subscription?.toFixed(2) || '0.00'}</p>
+              <h3 className="text-sm font-medium text-gray-600 metric-label">Avg Cost/Sub</h3>
+              <p className="text-3xl font-bold mt-2 metric-value" style={{ color: 'var(--foreground)' }}>${stats.average_cost_per_subscription?.toFixed(2) || '0.00'}</p>
             </div>
             <FiTrendingUp className="text-2xl text-gray-400" />
           </div>
         </div>
       </div>
 
-      {/* Subscription Duration Breakdown */}
-      <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Subscription Duration Breakdown</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["30"] || 0}</p>
-            <p className="text-sm text-gray-600">30 Days</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["90"] || 0}</p>
-            <p className="text-sm text-gray-600">90 Days</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>{stats.subscription_days_breakdown?.["365"] || 0}</p>
-            <p className="text-sm text-gray-600">365 Days</p>
-          </div>
-        </div>
-      </div>
 
       {/* Provider Usage */}
-      <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Provider Usage</h3>
-        <div className="space-y-4">
+      <div className="admin-card p-6 overview-card-mobile">
+        <h3 className="text-lg font-semibold mb-4 overview-section-mobile" style={{ color: 'var(--foreground)' }}>Provider Usage</h3>
+        <div className="space-y-3 provider-usage-mobile">
           {Object.entries(stats.provider_usage || {}).map(([provider, usage]) => (
-            <div key={provider} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+            <div key={provider} className="flex items-center justify-between py-2">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full" style={{ background: 'var(--accent)' }}></div>
                 <span className="font-medium capitalize">{provider}</span>
@@ -275,24 +321,6 @@ export default function AdminOverviewPage() {
         </div>
       </div>
 
-      {/* System Health */}
-      <div className="admin-card p-6">
-        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>System Health</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">API Status</span>
-            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Operational</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">Database</span>
-            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">Healthy</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-600">LLM Providers</span>
-            <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">All Online</span>
-          </div>
-        </div>
-      </div>
       </div>
     </AdminLayout>
   );

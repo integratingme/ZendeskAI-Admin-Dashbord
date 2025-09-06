@@ -332,17 +332,9 @@ export default function UserSettings() {
         </h3>
         
         <div className="space-y-3 text-sm">
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-1 sm:gap-0">
             <span style={{ color: 'var(--foreground)', opacity: 0.7 }}>Need help with your subscription?</span>
             <span style={{ color: 'var(--accent)' }}>Contact your administrator</span>
-          </div>
-          <div className="flex justify-between">
-            <span style={{ color: 'var(--foreground)', opacity: 0.7 }}>Technical support:</span>
-            <span style={{ color: 'var(--accent)' }}>Check documentation</span>
-          </div>
-          <div className="flex justify-between">
-            <span style={{ color: 'var(--foreground)', opacity: 0.7 }}>Feature requests:</span>
-            <span style={{ color: 'var(--accent)' }}>Submit feedback</span>
           </div>
         </div>
       </div>
@@ -716,7 +708,7 @@ function LLMConfigurationSection({ subscription, onConfigUpdate }: LLMConfigurat
                   setIsEditing(false);
                   loadCurrentConfig(); // Reset changes
                 }}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-2 py-1 md:px-3 md:py-2 rounded-lg transition-colors text-sm md:text-base"
                 style={{
                   background: 'var(--background)',
                   border: '1px solid var(--border)',
@@ -728,7 +720,7 @@ function LLMConfigurationSection({ subscription, onConfigUpdate }: LLMConfigurat
               <button
                 onClick={handleSave}
                 disabled={saving || !validateMandatoryFields()}
-                className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-2 py-1 md:px-3 md:py-2 rounded-lg transition-colors text-sm md:text-base"
                 style={{
                   background: 'var(--accent)',
                   color: 'white',
@@ -742,14 +734,14 @@ function LLMConfigurationSection({ subscription, onConfigUpdate }: LLMConfigurat
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-2 py-1 md:px-3 md:py-2 rounded-lg transition-colors text-sm md:text-base"
               style={{
                 background: 'var(--accent)',
                 color: 'white',
                 border: 'none'
               }}
             >
-              <span>Edit Configuration</span>
+              <span>Edit</span>
             </button>
           )}
         </div>

@@ -6,7 +6,7 @@ import { FiMenu } from 'react-icons/fi';
 import Sidebar from '@/components/Sidebar';
 import AdminIdleWarning from '@/components/AdminIdleWarning';
 
-type ActiveSection = 'overview' | 'subscriptions' | 'analytics' | 'providers' | 'testing' | 'tokens' | 'features' | 'templates' | 'prompts';
+type ActiveSection = 'overview' | 'subscriptions' | 'analytics' | 'testing' | 'tokens' | 'features' | 'prompts';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -25,16 +25,12 @@ export default function AdminLayout({ children, activeSection }: AdminLayoutProp
         return 'Subscriptions';
       case 'analytics':
         return 'Analytics';
-      case 'providers':
-        return 'Providers';
       case 'testing':
         return 'Testing';
       case 'tokens':
-        return 'Admin Tokens';
+        return 'Tokens';
       case 'features':
-        return 'Feature Management';
-      case 'templates':
-        return 'Tier Templates';
+        return 'Features';
       case 'prompts':
         return 'Prompts';
       default:

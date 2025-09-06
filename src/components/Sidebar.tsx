@@ -5,20 +5,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
 import ConfirmDialog from '@/components/ConfirmDialog';
-import { 
-  FiBarChart2, 
-  FiUsers, 
-  FiTrendingUp, 
-  FiSettings, 
-  FiActivity, 
-  FiKey,
+import {
+  FiBarChart2,
+  FiUsers,
+  FiTrendingUp,
+  FiActivity,
   FiLogOut,
   FiSun,
   FiMoon,
-  FiLayers
 } from 'react-icons/fi';
 import { CgOptions } from 'react-icons/cg';
 import { TbPrompt } from 'react-icons/tb';
+import { SiBasicattentiontoken } from 'react-icons/si';
 
 interface SidebarProps {
   activeSection: string;
@@ -30,11 +28,9 @@ const menuItems = [
   { id: 'overview', label: 'Overview', icon: FiBarChart2, path: '/admin/overview' },
   { id: 'subscriptions', label: 'Subscriptions', icon: FiUsers, path: '/admin/subscriptions' },
   { id: 'analytics', label: 'Analytics', icon: FiTrendingUp, path: '/admin/analytics' },
-  { id: 'providers', label: 'Providers', icon: FiSettings, path: '/admin/providers' },
   { id: 'testing', label: 'Testing', icon: FiActivity, path: '/admin/testing' },
-  { id: 'tokens', label: 'Admin Tokens', icon: FiKey, path: '/admin/tokens' },
-  { id: 'features', label: 'Feature Control', icon: CgOptions, path: '/admin/features' },
-  { id: 'templates', label: 'Tier Templates', icon: FiLayers, path: '/admin/templates' },
+  { id: 'tokens', label: 'Tokens', icon: SiBasicattentiontoken, path: '/admin/tokens' },
+  { id: 'features', label: 'Features', icon: CgOptions, path: '/admin/features' },
   { id: 'prompts', label: 'Prompts', icon: TbPrompt, path: '/admin/prompts' },
 ];
 
@@ -69,9 +65,9 @@ export default function Sidebar({ activeSection, isOpen = true, onToggle }: Side
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 md:hidden"
-          style={{ background: 'var(--modal-overlay)' }}
+          style={{ background: 'rgba(0, 0, 0, 0.5)' }}
           onClick={onToggle}
         />
       )}

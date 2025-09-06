@@ -99,7 +99,7 @@ export default function AdminTokensPage() {
         // Refresh tokens list
         await fetchTokens();
         
-        toast.success('Token Created', 'New admin token has been generated successfully');
+        toast.success('Token Created', 'New token has been generated successfully');
       } else {
         throw new Error(response.message || 'Failed to create token');
       }
@@ -255,7 +255,7 @@ export default function AdminTokensPage() {
       <AdminLayout activeSection="tokens">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Admin Tokens</h1>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Tokens</h1>
           <button 
             onClick={fetchTokens}
             className="admin-button-outline px-4 py-2 rounded-lg"
@@ -281,7 +281,7 @@ export default function AdminTokensPage() {
     <AdminLayout activeSection="tokens">
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Admin Tokens</h1>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>Tokens</h1>
         <div className="flex gap-3">
           <button 
             onClick={fetchTokens}
@@ -397,7 +397,7 @@ export default function AdminTokensPage() {
         </div>
       ) : (
         <div className="admin-card p-12 text-center">
-          <p className="text-gray-500 mb-4">No admin tokens found</p>
+          <p className="text-gray-500 mb-4">No tokens found</p>
           <button 
             onClick={() => setShowCreateForm(true)}
             className="admin-button px-6 py-2 rounded-lg"
@@ -411,7 +411,7 @@ export default function AdminTokensPage() {
       {showCreateForm && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'var(--modal-overlay)' }}>
           <div className="rounded-lg p-6 w-full max-w-md" style={{ background: 'var(--card-bg)' }}>
-            <h2 className="text-lg font-semibold mb-4">Create Admin Token</h2>
+            <h2 className="text-lg font-semibold mb-4">Create Token</h2>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -467,7 +467,7 @@ export default function AdminTokensPage() {
             <h2 className="text-lg font-semibold mb-4">Token Created Successfully</h2>
             <div className="p-4 rounded-lg mb-4" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)' }}>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600">Your new admin token:</p>
+                <p className="text-sm text-gray-600">Your new token:</p>
                 <button
                   onClick={() => {
                     if (!newToken) return;
@@ -503,7 +503,7 @@ export default function AdminTokensPage() {
       {/* Confirmation Dialog */}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        title="Revoke Admin Token"
+        title="Revoke Token"
         message={
           confirmDialog.isCurrentToken
             ? `⚠️ WARNING: You are about to revoke the token "${confirmDialog.tokenDescription}" which appears to be your current authentication token. This will immediately log you out of the admin dashboard. Are you sure you want to continue?`

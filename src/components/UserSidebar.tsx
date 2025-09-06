@@ -80,13 +80,14 @@ export default function UserSidebar({ activeSection, isOpen, onToggle }: UserSid
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+      {/* Mobile Overlay - Temporarily disabled to test */}
+      {/* {isOpen && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          style={{ background: 'transparent' }}
           onClick={onToggle}
         />
-      )}
+      )} */}
 
       {/* Sidebar */}
       <div

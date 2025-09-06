@@ -6,6 +6,7 @@ import { apiService, ApiError } from "@/lib/api";
 import { useToastContext } from "@/contexts/ToastContext";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { FiRefreshCw, FiX, FiRotateCcw, FiSearch } from "react-icons/fi";
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 import { MdOutlineContentCopy } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import TierTemplateSelector from "@/components/TierTemplateSelector";
@@ -602,8 +603,17 @@ export default function AdminSubscriptionsPage() {
   const handleToggleInactive = async (newValue: boolean) => {
     setShowInactive(newValue);
     setCurrentPage(1); // Reset to first page when toggling
-    // Pass the new value directly to avoid stale closure issue
-    await fetchSubscriptionsWithValue(newValue, true, 1);
+    setToggleLoading(true);
+    try {
+      // If searching, refresh the full search set, otherwise just refresh paginated list
+      if (searchTerm) {
+        await fetchAllSubscriptions(newValue);
+      } else {
+        await fetchSubscriptionsWithValue(newValue, true, 1);
+      }
+    } finally {
+      setToggleLoading(false);
+    }
   };
 
   const handleProviderChange = (
@@ -1089,45 +1099,59 @@ export default function AdminSubscriptionsPage() {
         {/* Filter Controls */}
         <div className="admin-card p-4">
           <div className="flex flex-col gap-4">
-            {/* Top Row - Toggle and Search */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center space-x-3">
-                <span
-                  className="text-sm font-medium whitespace-nowrap"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  Show inactive subscriptions
-                </span>
+            {/* Mobile Layout - Search Full Width */}
+            <div className="block sm:hidden">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <div className="flex items-center border rounded-lg flex-1 min-w-[220px]" style={{ borderColor: 'var(--border)' }}>
+                  <input
+                    type="text"
+                    placeholder="Search subscriptions..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                    className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none flex-1"
+                    style={{ color: 'var(--foreground)', background: 'transparent' }}
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className="px-3 py-2 border-l text-sm hover:bg-gray-50"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    title="Search"
+                  >
+                    <FiSearch className="w-4 h-4" />
+                  </button>
+                </div>
+                {searchTerm && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 whitespace-nowrap"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    title="Clear search"
+                  >
+                    Clear
+                  </button>
+                )}
                 <button
                   onClick={() => handleToggleInactive(!showInactive)}
                   disabled={toggleLoading}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 ease-in-out ${
-                    showInactive
-                      ? "focus:ring-orange-500"
-                      : "focus:ring-gray-400"
-                  }`}
-                  style={{
-                    backgroundColor: showInactive
-                      ? "var(--accent)"
-                      : "var(--border)",
-                    transition: "background-color 0.3s ease",
-                  }}
-                  role="switch"
-                  aria-checked={showInactive}
-                  aria-label="Toggle inactive subscriptions"
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 whitespace-nowrap disabled:opacity-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title={showInactive ? 'Hide inactive subscriptions' : 'Show inactive subscriptions'}
                 >
-                  <span
-                    className={`inline-block h-4 w-4 rounded-full transform transition-transform duration-300 ease-in-out ${
-                      showInactive ? "translate-x-6" : "translate-x-1"
-                    }`}
-                    style={{
-                      backgroundColor: "var(--card-bg)",
-                      boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-                    }}
-                  />
+                  {toggleLoading ? (
+                    <span className="inline-flex items-center gap-2"><FiRefreshCw className="w-4 h-4 animate-spin" /> Updating...</span>
+                  ) : (
+                    showInactive ? 'Hide inactive' : 'Show inactive'
+                  )}
                 </button>
               </div>
+            </div>
 
+            {/* Desktop Layout - Search + Toggle */}
+            <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                {showInactive ? 'Showing inactive subscriptions' : 'Hiding inactive subscriptions'}
+              </div>
               {/* Search */}
               <div className="flex items-center gap-2">
                 <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
@@ -1159,6 +1183,19 @@ export default function AdminSubscriptionsPage() {
                     Clear
                   </button>
                 )}
+                <button
+                  onClick={() => handleToggleInactive(!showInactive)}
+                  disabled={toggleLoading}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 whitespace-nowrap disabled:opacity-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title={showInactive ? 'Hide inactive subscriptions' : 'Show inactive subscriptions'}
+                >
+                  {toggleLoading ? (
+                    <span className="inline-flex items-center gap-2"><FiRefreshCw className="w-4 h-4 animate-spin" /> Updating...</span>
+                  ) : (
+                    showInactive ? 'Hide inactive' : 'Show inactive'
+                  )}
+                </button>
               </div>
             </div>
 
@@ -1269,7 +1306,7 @@ export default function AdminSubscriptionsPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+                    <div className="flex flex-wrap gap-2 pt-2 border-t subscription-mobile-actions" style={{ borderColor: "var(--border)" }}>
                       <button
                         onClick={async () => {
                           setSelectedSubscription(subscription);
@@ -1754,7 +1791,7 @@ export default function AdminSubscriptionsPage() {
                   color: "var(--foreground)",
                 }}
               >
-                Previous
+                <LuChevronLeft />
               </button>
               <span className="text-sm" style={{ color: "var(--foreground)" }}>
                 Page {currentPage}
@@ -1772,7 +1809,7 @@ export default function AdminSubscriptionsPage() {
                   color: "var(--foreground)",
                 }}
               >
-                Next
+                <LuChevronRight />
               </button>
             </div>
           </div>
@@ -3075,6 +3112,14 @@ export default function AdminSubscriptionsPage() {
           }
         />
       </div>
-    </AdminLayout>
+
+      <style jsx>{`
+        @media (max-width: 640px) {
+          .subscription-mobile-actions {
+            border-top: none !important;
+          }
+        }
+      `}</style>
+  </AdminLayout>
   );
 }

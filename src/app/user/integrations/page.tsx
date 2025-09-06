@@ -176,8 +176,8 @@ export default function UserIntegrationsPage() {
 
       {/* Zendesk Modal */}
       {showZendeskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="w-full max-w-lg p-6 rounded-xl border" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'var(--modal-overlay)' }}>
+          <div className="w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl border" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Connect Zendesk</h3>
 
             {/* Zendesk Single-Step Form */}
@@ -187,7 +187,7 @@ export default function UserIntegrationsPage() {
                type="email"
                value={zdEmail}
                onChange={(e) => setZdEmail(e.target.value)}
-               className="w-full px-4 py-3 rounded-lg border"
+               className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-sm sm:text-base"
                style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
                placeholder="agent@example.com"
                aria-invalid={!zdEmailValid}
@@ -200,7 +200,7 @@ export default function UserIntegrationsPage() {
                 type="text"
                 value={zdSubdomain}
                 onChange={(e) => setZdSubdomain(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border"
+                className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-sm sm:text-base"
                 style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
                 placeholder="your-company"
               />
@@ -209,14 +209,14 @@ export default function UserIntegrationsPage() {
                 type="password"
                 value={zdToken}
                 onChange={(e) => setZdToken(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border"
+                className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-sm sm:text-base"
                 style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }}
                 placeholder="Enter API Token"
               />
-              <div className="flex items-center gap-3">
-                <button onClick={() => setShowZendeskModal(false)} className="px-4 py-2 rounded-lg border" style={{ background: 'transparent', color: 'var(--foreground)', borderColor: 'var(--border)' }}>Cancel</button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-6">
+                <button onClick={() => setShowZendeskModal(false)} className="px-4 py-2 rounded-lg border text-sm sm:text-base" style={{ background: 'transparent', color: 'var(--foreground)', borderColor: 'var(--border)' }}>Cancel</button>
                 {canSaveZd && (
-                  <button disabled={savingZd} onClick={saveZendesk} className="px-4 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }}>{savingZd ? 'Saving...' : 'Save'}</button>
+                  <button disabled={savingZd} onClick={saveZendesk} className="px-4 py-2 rounded-lg text-sm sm:text-base" style={{ background: 'var(--accent)', color: 'white' }}>{savingZd ? 'Saving...' : 'Save'}</button>
                 )}
               </div>
             </div>
@@ -228,23 +228,23 @@ export default function UserIntegrationsPage() {
 
       {/* Confluence Modal */}
       {showConfluenceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'var(--modal-overlay)' }}>
-          <div className="w-full max-w-lg p-6 rounded-xl border" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'var(--modal-overlay)' }}>
+          <div className="w-full max-w-lg mx-auto max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl border" style={{ background: 'var(--card-bg)', borderColor: 'var(--border)' }}>
             <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--foreground)' }}>Connect Confluence (Optional)</h3>
             <div className="space-y-4">
               <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>Confluence Base URL</label>
-              <input type="text" value={cfBaseUrl} onChange={(e)=>setCfBaseUrl(e.target.value)} className="w-full px-4 py-3 rounded-lg border" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }} placeholder="https://your-site.atlassian.net/wiki" />
+              <input type="text" value={cfBaseUrl} onChange={(e)=>setCfBaseUrl(e.target.value)} className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-sm sm:text-base" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }} placeholder="https://your-site.atlassian.net/wiki" />
               <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>Confluence Email</label>
-              <input type="email" value={cfUsername} onChange={(e)=>setCfUsername(e.target.value)} className="w-full px-4 py-3 rounded-lg border" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }} placeholder="you@example.com" aria-invalid={!cfUsernameValid} />
+              <input type="email" value={cfUsername} onChange={(e)=>setCfUsername(e.target.value)} className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-sm sm:text-base" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }} placeholder="you@example.com" aria-invalid={!cfUsernameValid} />
               {!cfUsernameValid && cfUsername.trim().length > 0 && (
                 <p className="text-xs" style={{ color: '#ef4444' }}>Please enter a valid email address.</p>
               )}
               <label className="block text-sm font-medium" style={{ color: 'var(--foreground)' }}>Confluence API Token</label>
-              <input type="password" value={cfToken} onChange={(e)=>setCfToken(e.target.value)} className="w-full px-4 py-3 rounded-lg border" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }} placeholder="Enter API Token" />
-              <div className="flex items-center gap-3">
-                <button onClick={() => setShowConfluenceModal(false)} className="px-4 py-2 rounded-lg border" style={{ background: 'transparent', color: 'var(--foreground)', borderColor: 'var(--border)' }}>Cancel</button>
+              <input type="password" value={cfToken} onChange={(e)=>setCfToken(e.target.value)} className="w-full px-3 py-2 sm:px-4 sm:py-3 rounded-lg border text-sm sm:text-base" style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--foreground)' }} placeholder="Enter API Token" />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-6">
+                <button onClick={() => setShowConfluenceModal(false)} className="px-4 py-2 rounded-lg border text-sm sm:text-base" style={{ background: 'transparent', color: 'var(--foreground)', borderColor: 'var(--border)' }}>Cancel</button>
                 {canSaveCf && (
-                  <button disabled={savingCf} onClick={saveConfluence} className="px-4 py-2 rounded-lg" style={{ background: 'var(--accent)', color: 'white' }}>{savingCf ? 'Saving...' : 'Save'}</button>
+                  <button disabled={savingCf} onClick={saveConfluence} className="px-4 py-2 rounded-lg text-sm sm:text-base" style={{ background: 'var(--accent)', color: 'white' }}>{savingCf ? 'Saving...' : 'Save'}</button>
                 )}
               </div>
             </div>

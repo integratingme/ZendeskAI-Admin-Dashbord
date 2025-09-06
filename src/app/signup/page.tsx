@@ -411,7 +411,7 @@ export default function SignupPage() {
               </div>
 
               <p className="text-xs text-center" style={{ color: 'var(--foreground)', opacity: 0.6 }}>
-                Tip: After logging in, visit Providers to configure your own LLM keys.
+                Tip: After logging in, visit Settings to configure your own LLM keys.
               </p>
             </div>
           )}

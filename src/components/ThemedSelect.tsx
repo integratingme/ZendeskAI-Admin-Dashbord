@@ -12,7 +12,8 @@ interface ThemedSelectProps {
   onChange: (val: string) => void;
   options: Option[];
   placeholder?: string;
-  className?: string;
+  className?: string; // container class
+  buttonClassName?: string; // optional class for the trigger button to control height/rounded
   disabled?: boolean;
   ariaLabel?: string;
 }
@@ -23,6 +24,7 @@ export default function ThemedSelect({
   options,
   placeholder = "Select...",
   className = "",
+  buttonClassName = "",
   disabled = false,
   ariaLabel,
 }: ThemedSelectProps) {
@@ -96,7 +98,7 @@ export default function ThemedSelect({
         aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleKeyDown}
-        className="w-full p-3 rounded-lg border transition-colors text-left focus:outline-none flex items-center"
+        className={`w-full p-3 rounded-lg border transition-colors text-left focus:outline-none flex items-center ${buttonClassName}`}
         style={{
           background: "var(--card-bg)",
           border: "1px solid var(--border)",

@@ -5,6 +5,7 @@ import ThemedSelect from "@/components/ThemedSelect";
 import { apiService } from "@/lib/api";
 import { useToastContext } from "@/contexts/ToastContext";
 import { FiAlertTriangle, FiSearch } from "react-icons/fi";
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 
 const FEATURE_OPTIONS = [
   { value: "summarize", label: "Summarize" },
@@ -441,8 +442,91 @@ export default function AdminPromptsPage() {
       {/* List View */}
       {viewMode === 'list' && (
         <div className="admin-card p-6 transition-all duration-300 ease-in-out">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <div>
+          <div className="space-y-4 mb-4">
+            {/* Mobile Layout - Search Full Width */}
+            <div className="block sm:hidden">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center border rounded-lg flex-1" style={{ borderColor: 'var(--border)' }}>
+                  <input
+                    type="text"
+                    placeholder="Search subscriptions..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                    className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none flex-1"
+                    style={{ color: 'var(--foreground)', background: 'transparent' }}
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className="px-3 py-2 border-l text-sm hover:bg-gray-50 flex-shrink-0"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    title="Search"
+                  >
+                    <FiSearch className="w-4 h-4" />
+                  </button>
+                </div>
+                {searchTerm && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 flex-shrink-0"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    title="Clear search"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Desktop Layout - Title and Search */}
+            <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
+                  Select Subscription for Prompts
+                </h3>
+                {searchTerm && (
+                  <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                    Filtered by: {`"${searchTerm}"`}
+                  </p>
+                )}
+              </div>
+
+              {/* Search */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
+                  <input
+                    type="text"
+                    placeholder="Search subscriptions..."
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleSearchKeyPress}
+                    className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none"
+                    style={{ color: 'var(--foreground)', background: 'transparent' }}
+                  />
+                  <button
+                    onClick={handleSearch}
+                    className="px-3 py-2 border-l text-sm hover:bg-gray-50"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    title="Search"
+                  >
+                    <FiSearch className="w-4 h-4" />
+                  </button>
+                </div>
+                {searchTerm && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                    style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                    title="Clear search"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile Title and Filter Info */}
+            <div className="block sm:hidden">
               <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>
                 Select Subscription for Prompts
               </h3>
@@ -450,39 +534,6 @@ export default function AdminPromptsPage() {
                 <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
                   Filtered by: {`"${searchTerm}"`}
                 </p>
-              )}
-            </div>
-
-            {/* Search */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
-                <input
-                  type="text"
-                  placeholder="Search subscriptions..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyPress={handleSearchKeyPress}
-                  className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none"
-                  style={{ color: 'var(--foreground)', background: 'transparent' }}
-                />
-                <button
-                  onClick={handleSearch}
-                  className="px-3 py-2 border-l text-sm hover:bg-gray-50"
-                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                  title="Search"
-                >
-                  <FiSearch className="w-4 h-4" />
-                </button>
-              </div>
-              {searchTerm && (
-                <button
-                  onClick={handleClearSearch}
-                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
-                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                  title="Clear search"
-                >
-                  Clear
-                </button>
               )}
             </div>
           </div>
@@ -513,7 +564,7 @@ export default function AdminPromptsPage() {
                 <>
                   {/* Default Prompts Option */}
                   <div
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors prompts-item-mobile"
                     style={{ borderColor: 'var(--border)', background: 'var(--hover-bg)' }}
                   >
                     <div>
@@ -526,7 +577,7 @@ export default function AdminPromptsPage() {
                     </div>
                     <button
                       onClick={() => handleViewPrompts("__default__")}
-                      className="admin-button px-4 py-2 rounded-lg flex items-center gap-2"
+                      className="admin-button px-1 py-0.5 sm:px-4 sm:py-2 rounded text-xs sm:text-sm flex items-center gap-0.5 sm:gap-2 w-fit"
                     >
                       View Prompts
                     </button>
@@ -536,7 +587,7 @@ export default function AdminPromptsPage() {
                   {filteredSubscriptions.map((subscription) => (
                     <div
                       key={subscription.key}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors prompts-item-mobile"
                       style={{ borderColor: 'var(--border)' }}
                     >
                       <div>
@@ -549,7 +600,7 @@ export default function AdminPromptsPage() {
                       </div>
                       <button
                         onClick={() => handleViewPrompts(subscription.key)}
-                        className="admin-button px-4 py-2 rounded-lg flex items-center gap-2"
+                        className="admin-button px-1 py-0.5 sm:px-4 sm:py-2 rounded text-xs sm:text-sm flex items-center gap-0.5 sm:gap-2 w-fit"
                       >
                         View Prompts
                       </button>
@@ -566,7 +617,7 @@ export default function AdminPromptsPage() {
                     disabled={currentPage === 1}
                     className="admin-button-outline px-4 py-2 rounded-lg disabled:opacity-50"
                   >
-                    Previous
+                    <LuChevronLeft />
                   </button>
 
                   <div className="text-sm text-gray-600">
@@ -578,7 +629,7 @@ export default function AdminPromptsPage() {
                     disabled={currentPage === totalPages}
                     className="admin-button-outline px-4 py-2 rounded-lg disabled:opacity-50"
                   >
-                    Next
+                    <LuChevronRight />
                   </button>
                 </div>
               )}
@@ -607,8 +658,12 @@ export default function AdminPromptsPage() {
           <div>
             <div className="font-semibold" style={{ color: 'var(--foreground)' }}>Important</div>
             <div className="text-sm" style={{ color: 'var(--foreground)', opacity: 0.85 }}>
-              Do not modify Output format field names or structure (e.g., <code>smart_summary</code>, <code>display_text</code>, <code>summary_reasoning</code>, <code>main_issue</code>, <code>key_metrics.customer_sentiment</code>, <code>confidence_score</code>). You may change descriptive text (like word counts), but renaming or removing keys can break parsing.<br/>
-              Context caution: Modify the <strong>Context</strong> section at your own risk â€” it controls how ticket and related data are analyzed by the LLM.
+              <p>
+                Do not modify Output format field names or structure (e.g., <code>smart_summary</code>, <code>display_text</code>, <code>summary_reasoning</code>, <code>main_issue</code>, <code>key_metrics.customer_sentiment</code>, <code>confidence_score</code>). You may change descriptive text (like word counts), but renaming or removing keys can break parsing.
+              </p>
+              <p className="mt-2">
+                <strong>Context caution:</strong> Modify the <strong>Context</strong> section at your own risk &mdash; it controls how ticket and related data are analyzed by the LLM.
+              </p>
             </div>
           </div>
         </div>
@@ -875,4 +930,5 @@ export default function AdminPromptsPage() {
     </AdminLayout>
   );
 }
+
 

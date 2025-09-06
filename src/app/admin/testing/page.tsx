@@ -5,6 +5,7 @@ import { apiService, ApiError } from '@/lib/api';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToastContext } from '@/contexts/ToastContext';
 import { FiSearch } from 'react-icons/fi';
+import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
 
 interface TestResult {
   [key: string]: unknown;
@@ -223,11 +224,6 @@ export default function AdminTestingPage() {
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleString();
-  };
-
   // Helpers: format status and sanitize provider errors for user-friendly display
   const formatOverallStatus = (raw: string): string => {
     if (!raw) return 'Unknown';
@@ -395,46 +391,94 @@ export default function AdminTestingPage() {
 
       {/* User Selection */}
       <div className="admin-card p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div>
+        <div className="space-y-4 mb-4">
+          {/* Mobile Layout - Search Full Width */}
+          <div className="block sm:hidden">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center border rounded-lg flex-1" style={{ borderColor: 'var(--border)' }}>
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none flex-1"
+                  style={{ color: 'var(--foreground)', background: 'transparent' }}
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-3 py-2 border-l text-sm hover:bg-gray-50 flex-shrink-0"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Search"
+                >
+                  <FiSearch className="w-4 h-4" />
+                </button>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50 flex-shrink-0"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Clear search"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Layout - Title and Search */}
+          <div className="hidden sm:flex sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Select User for Testing</h3>
+              {searchTerm && (
+                <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
+                  Filtered by: {`"${searchTerm}"` }
+                </p>
+              )}
+            </div>
+
+            {/* Search */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none"
+                  style={{ color: 'var(--foreground)', background: 'transparent' }}
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-3 py-2 border-l text-sm hover:bg-gray-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Search"
+                >
+                  <FiSearch className="w-4 h-4" />
+                </button>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={handleClearSearch}
+                  className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                  style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
+                  title="Clear search"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Title and Filter Info */}
+          <div className="block sm:hidden">
             <h3 className="text-lg font-semibold" style={{ color: 'var(--foreground)' }}>Select User for Testing</h3>
             {searchTerm && (
               <p className="text-sm mt-1" style={{ color: 'var(--foreground)', opacity: 0.7 }}>
                 Filtered by: {`"${searchTerm}"` }
               </p>
-            )}
-          </div>
-          
-          {/* Search */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center border rounded-lg" style={{ borderColor: 'var(--border)' }}>
-              <input
-                type="text"
-                placeholder="Search users..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyPress={handleSearchKeyPress}
-                className="px-3 py-2 rounded-l-lg text-sm border-0 outline-none"
-                style={{ color: 'var(--foreground)', background: 'transparent' }}
-              />
-              <button
-                onClick={handleSearch}
-                className="px-3 py-2 border-l text-sm hover:bg-gray-50"
-                style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                title="Search"
-              >
-                <FiSearch className="w-4 h-4" />
-              </button>
-            </div>
-            {searchTerm && (
-              <button
-                onClick={handleClearSearch}
-                className="px-3 py-2 text-sm border rounded-lg hover:bg-gray-50"
-                style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                title="Clear search"
-              >
-                Clear
-              </button>
             )}
           </div>
         </div>
@@ -507,7 +551,7 @@ export default function AdminTestingPage() {
                 className="px-3 py-1 rounded border disabled:opacity-50"
                 style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
               >
-                Previous
+                <LuChevronLeft />
               </button>
               <span className="text-sm" style={{ color: 'var(--foreground)' }}>
                 Page {currentPage} of {totalPages}
@@ -518,7 +562,7 @@ export default function AdminTestingPage() {
                 className="px-3 py-1 rounded border disabled:opacity-50"
                 style={{ borderColor: 'var(--border)', color: 'var(--foreground)' }}
               >
-                Next
+                <LuChevronRight />
               </button>
             </div>
           </div>
